@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>The Last Second</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <main id="game">
+
+        <section id="start-screen">
+
+            <p class="subtitle">
+                A psychological puzzle game
+            </p>
+
+            <h1>
+                THE LAST SECOND
+            </h1>
+
+            <p class="tagline">
+                Everyone gets the same amount of time.
+            </p>
+
+            <button id="start-btn">
+                START GAME
+            </button>
+
+        </section>
+        <section id="character-screen">
+
+            <p class="subtitle">
+                Before we begin...
+            </p>
+
+            <h2>
+                WHO ARE YOU?
+            </h2>
+
+            <div class="character-options">
+
+            <button class="character-btn" id="boy-btn">
+                 👦
+                <span>BOY</span>
+            </button>
+
+            <button class="character-btn" id="girl-btn">
+                 👧
+                <span>GIRL</span>
+            </button>
+
+            </div>
+
+        </section>
+        <section id="name-screen">
+
+    <p class="subtitle">
+        Identity
+    </p>
+
+    <h2>
+        WHAT SHOULD WE CALL YOU?
+    </h2>
+
+    <input
+        type="text"
+        id="player-name"
+        placeholder="Enter your name"
+        maxlength="20"
+    >
+
+    <br>
+
+    <button id="continue-btn">
+        CONTINUE
+    </button>
+
+    <p id="name-error"></p>
+
+</section>
+<section id="school-screen">
+
+    <div class="rain"></div>
+
+    <div class="school-content">
+
+        <p class="location-text">
+            11:47 PM
+        </p>
+
+        <h2>
+            THE SCHOOL
+        </h2>
+
+        <p class="school-description">
+            The rain gets heavier as you approach the building.
+        </p>
+
+        <p class="school-description">
+            The entrance door is already open.
+        </p>
+
+        <button id="enter-school-btn">
+            ENTER
+        </button>
+
+    </div>
+
+</section>
+<section id="hallway-screen">
+
+    <div class="flicker-light"></div>
+
+    <div class="hallway-content">
+
+        <p class="hallway-time">11:48 PM</p>
+
+        <h2>...</h2>
+
+        <p id="door-message">
+            You step inside.
+        </p>
+
+        <button id="hallway-continue">
+            CONTINUE
+        </button>
+
+    </div>
+
+</section>
+<section id="psycho-screen">
+
+    <div class="projector-noise"></div>
+
+    <div class="psycho-room">
+
+        <div class="screen-glow"></div>
+
+        <div class="psycho-silhouette">
+            <div class="psycho-head"></div>
+            <div class="psycho-body"></div>
+        </div>
+
+        <div class="psycho-dialogue">
+
+            <p class="psycho-name" id="psycho-name"></p>
+
+            <p id="psycho-text"></p>
+
+            <button id="psycho-next">
+                CONTINUE
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+    </main>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>

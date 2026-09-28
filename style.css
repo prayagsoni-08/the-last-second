@@ -1,0 +1,807 @@
+/* ---------- BASIC SETUP ---------- */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #080808;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+
+/* ---------- GAME SCREEN ---------- */
+
+#game {
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background:
+        radial-gradient(
+            circle at center,
+            #1a1a1a 0%,
+            #080808 70%
+        );
+}
+
+
+/* ---------- START SCREEN ---------- */
+
+#start-screen {
+    text-align: center;
+}
+
+
+/* ---------- SMALL TEXT ---------- */
+
+.subtitle {
+    color: #888;
+    font-size: 14px;
+
+    letter-spacing: 4px;
+    text-transform: uppercase;
+
+    margin-bottom: 25px;
+}
+
+
+/* ---------- GAME TITLE ---------- */
+
+h1 {
+    font-size: 70px;
+    letter-spacing: 8px;
+
+    margin-bottom: 20px;
+
+    text-shadow:
+        0 0 10px rgba(255, 255, 255, 0.15);
+}
+
+
+/* ---------- TAGLINE ---------- */
+
+.tagline {
+    color: #777;
+
+    font-size: 16px;
+
+    font-style: italic;
+
+    margin-bottom: 40px;
+}
+
+
+/* ---------- START BUTTON ---------- */
+
+#start-btn {
+    background: transparent;
+
+    color: white;
+
+    border: 1px solid #555;
+
+    padding: 14px 35px;
+
+    font-size: 16px;
+
+    letter-spacing: 2px;
+
+    cursor: pointer;
+
+    transition: all 0.3s ease;
+}
+
+
+/* Button hover */
+
+#start-btn:hover {
+
+    background: white;
+
+    color: black;
+
+    border-color: white;
+
+    box-shadow:
+        0 0 20px rgba(255, 255, 255, 0.2);
+}
+/* ---------- OPENING ANIMATION ---------- */
+
+#start-screen {
+    animation: screenFadeIn 3s ease forwards;
+}
+
+.subtitle {
+    animation: textFade 2s ease forwards;
+}
+
+h1 {
+    animation: titleAppear 3s ease forwards;
+}
+
+.tagline {
+    animation: textFade 4s ease forwards;
+}
+
+#start-btn {
+    opacity: 0;
+    animation: buttonAppear 2s ease 2.5s forwards;
+}
+
+
+/* Screen slowly appears */
+
+@keyframes screenFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+
+/* Normal text */
+
+@keyframes textFade {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+
+/* Title */
+
+@keyframes titleAppear {
+
+    0% {
+        opacity: 0;
+        transform: scale(0.95);
+        letter-spacing: 20px;
+    }
+
+    60% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        letter-spacing: 8px;
+    }
+}
+
+
+/* Button appears after title */
+
+@keyframes buttonAppear {
+
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+#character-screen {
+    display: none;
+    text-align: center;
+}
+
+#character-screen h2 {
+    font-size: 40px;
+    letter-spacing: 5px;
+    margin-bottom: 40px;
+}
+
+.character-options {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+}
+
+.character-btn {
+    width: 160px;
+    height: 160px;
+    background: #111;
+    border: 1px solid #444;
+    color: white;
+    font-size: 50px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.character-btn span {
+    display: block;
+    font-size: 14px;
+    letter-spacing: 3px;
+    margin-top: 15px;
+    color: #888;
+}
+
+.character-btn:hover {
+    border-color: white;
+    background: #1b1b1b;
+    transform: scale(1.05);
+}
+/* ---------- NAME SCREEN ---------- */
+
+#name-screen {
+    display: none;
+    text-align: center;
+}
+
+#name-screen h2 {
+    font-size: 32px;
+    letter-spacing: 4px;
+    margin-bottom: 30px;
+}
+
+#player-name {
+    width: 300px;
+    padding: 14px;
+
+    background: #111;
+    color: white;
+
+    border: 1px solid #444;
+
+    font-size: 16px;
+
+    text-align: center;
+
+    outline: none;
+}
+
+#player-name:focus {
+    border-color: white;
+}
+
+#continue-btn {
+    margin-top: 25px;
+
+    background: transparent;
+    color: white;
+
+    border: 1px solid #555;
+
+    padding: 13px 35px;
+
+    font-size: 15px;
+
+    letter-spacing: 2px;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+#continue-btn:hover {
+    background: white;
+    color: black;
+}
+
+#name-error {
+    color: #b66;
+    margin-top: 15px;
+}
+/* ---------- SCHOOL SCREEN ---------- */
+
+#school-screen {
+    display: none;
+
+    position: relative;
+
+    width: 100%;
+    min-height: 100vh;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            rgba(0, 0, 0, 0.55),
+            rgba(0, 0, 0, 0.85)
+        ),
+        radial-gradient(
+            circle at 50% 35%,
+            #252530,
+            #050507 75%
+        );
+
+    text-align: center;
+}
+
+
+/* ---------- SCHOOL CONTENT ---------- */
+
+.school-content {
+    position: relative;
+
+    z-index: 2;
+
+    padding-top: 25vh;
+
+    animation: schoolAppear 3s ease forwards;
+}
+
+.location-text {
+    color: #777;
+
+    font-size: 14px;
+
+    letter-spacing: 5px;
+
+    margin-bottom: 30px;
+}
+
+.school-content h2 {
+    font-size: 60px;
+
+    letter-spacing: 10px;
+
+    margin-bottom: 30px;
+
+    text-shadow:
+        0 0 15px rgba(255, 255, 255, 0.15);
+}
+
+.school-description {
+    color: #888;
+
+    font-size: 16px;
+
+    margin: 10px;
+}
+
+
+/* ---------- ENTER BUTTON ---------- */
+
+#enter-school-btn {
+    margin-top: 35px;
+
+    padding: 14px 40px;
+
+    background: transparent;
+
+    color: white;
+
+    border: 1px solid #555;
+
+    font-size: 15px;
+
+    letter-spacing: 3px;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+#enter-school-btn:hover {
+    background: white;
+
+    color: black;
+
+    border-color: white;
+}
+
+
+/* ---------- RAIN ---------- */
+
+.rain {
+    position: absolute;
+
+    top: -100px;
+    left: 0;
+
+    width: 100%;
+    height: 130%;
+
+    pointer-events: none;
+
+    opacity: 0.35;
+
+    background-image:
+        repeating-linear-gradient(
+            105deg,
+            transparent 0px,
+            transparent 7px,
+            rgba(180, 190, 210, 0.5) 8px,
+            transparent 9px,
+            transparent 18px
+        );
+
+    animation: rainFall 0.7s linear infinite;
+}
+
+
+/* ---------- ANIMATIONS ---------- */
+
+@keyframes rainFall {
+
+    from {
+        transform: translateY(-40px);
+    }
+
+    to {
+        transform: translateY(80px);
+    }
+}
+
+
+@keyframes schoolAppear {
+
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+/* ---------- HALLWAY ---------- */
+
+#hallway-screen {
+    display: none;
+
+    position: relative;
+
+    min-height: 100vh;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            90deg,
+            #050505 0%,
+            #151515 45%,
+            #050505 100%
+        );
+
+    text-align: center;
+}
+
+
+/* Dark hallway effect */
+
+#hallway-screen::before {
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.9),
+            transparent 45%,
+            rgba(0, 0, 0, 0.9)
+        );
+
+    pointer-events: none;
+}
+
+
+/* Flickering light */
+
+.flicker-light {
+    position: absolute;
+
+    top: 12%;
+    left: 50%;
+
+    width: 160px;
+    height: 25px;
+
+    transform: translateX(-50%);
+
+    background: #aaa;
+
+    box-shadow:
+        0 0 30px #aaa,
+        0 0 70px rgba(255, 255, 255, 0.2);
+
+    animation: lightFlicker 4s infinite;
+}
+
+
+@keyframes lightFlicker {
+
+    0%, 18%, 22%, 63%, 67%, 100% {
+        opacity: 1;
+    }
+
+    20%, 65% {
+        opacity: 0.15;
+    }
+}
+
+
+/* Hallway content */
+
+.hallway-content {
+
+    position: relative;
+
+    z-index: 2;
+
+    padding-top: 32vh;
+
+    animation: hallwayAppear 2s ease;
+}
+
+
+.hallway-time {
+    color: #666;
+
+    letter-spacing: 4px;
+
+    font-size: 13px;
+}
+
+
+#door-message {
+    color: #999;
+
+    margin: 25px 0;
+
+    font-size: 17px;
+}
+
+
+#hallway-continue {
+    padding: 13px 35px;
+
+    background: transparent;
+
+    border: 1px solid #444;
+
+    color: white;
+
+    cursor: pointer;
+
+    letter-spacing: 2px;
+
+    transition: 0.3s;
+}
+
+
+#hallway-continue:hover {
+    background: white;
+
+    color: black;
+}
+
+
+@keyframes hallwayAppear {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+/* ---------- PSYCHO SCREEN ---------- */
+
+#psycho-screen {
+    display: none;
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+    background: #020202;
+    color: white;
+}
+
+
+/* Projector */
+
+.screen-glow {
+    position: absolute;
+
+    top: 8%;
+    left: 50%;
+
+    width: 500px;
+    height: 320px;
+
+    transform: translateX(-50%);
+
+    background: rgba(220, 220, 200, 0.12);
+
+    filter: blur(30px);
+
+    animation: projectorFlicker 4s infinite;
+}
+
+
+/* Psycho */
+
+.psycho-silhouette {
+    position: absolute;
+
+    top: 13%;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    width: 180px;
+    height: 250px;
+
+    opacity: 0;
+
+    animation: psychoAppear 4s ease forwards;
+
+    z-index: 2;
+}
+
+
+.psycho-head {
+    width: 75px;
+    height: 75px;
+
+    margin: auto;
+
+    border-radius: 50%;
+
+    background: #050505;
+
+    box-shadow: 0 0 25px #000;
+}
+
+
+.psycho-body {
+    width: 130px;
+    height: 170px;
+
+    margin: -5px auto 0;
+
+    border-radius: 60px 60px 0 0;
+
+    background: #050505;
+}
+
+
+/* Dialogue */
+
+.psycho-dialogue {
+    position: absolute;
+
+    left: 50%;
+    bottom: 8%;
+
+    transform: translateX(-50%);
+
+    width: min(700px, 85%);
+
+    text-align: center;
+
+    z-index: 5;
+}
+
+
+.psycho-name {
+    color: #999;
+
+    font-size: 13px;
+
+    letter-spacing: 5px;
+
+    margin-bottom: 20px;
+}
+
+
+#psycho-text {
+    min-height: 70px;
+
+    color: white;
+
+    font-size: 22px;
+
+    line-height: 1.6;
+
+    text-shadow: 0 0 10px rgba(255,255,255,0.15);
+}
+
+
+#psycho-next {
+    margin-top: 20px;
+
+    padding: 13px 35px;
+
+    background: transparent;
+
+    border: 1px solid #666;
+
+    color: white;
+
+    font-size: 14px;
+
+    letter-spacing: 3px;
+
+    cursor: pointer;
+
+    opacity: 0;
+
+    transition: 0.3s;
+}
+
+
+#psycho-next.visible {
+    opacity: 1;
+}
+
+
+#psycho-next:hover {
+    background: white;
+    color: black;
+}
+
+
+/* ---------- PSYCHO ANIMATION ---------- */
+
+@keyframes psychoAppear {
+
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.9);
+    }
+
+    35% {
+        opacity: 0.15;
+    }
+
+    40% {
+        opacity: 0;
+    }
+
+    45% {
+        opacity: 0.3;
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+    }
+}
+
+
+@keyframes projectorFlicker {
+
+    0% {
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    12% {
+        opacity: 0.2;
+    }
+
+    15% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
