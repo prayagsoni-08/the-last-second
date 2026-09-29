@@ -1335,3 +1335,516 @@ h1 {
     border-color: white;
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
 }
+/* =========================
+   OBSERVATION RESULT
+========================= */
+
+#observation-result-screen {
+    display: none;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at center, #111 0%, #030303 60%, #000 100%);
+    color: white;
+}
+/* =========================
+   LOGIC CHALLENGE
+========================= */
+
+#logic-screen {
+    display: none;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at center, #151515 0%, #050505 55%, #000 100%);
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.logic-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 30px;
+}
+
+.logic-container h1 {
+    font-size: 42px;
+    letter-spacing: 8px;
+    margin: 0 0 15px;
+}
+
+#logic-message {
+    color: #888;
+    font-size: 17px;
+    margin-bottom: 35px;
+}
+
+#logic-question {
+    font-size: 34px;
+    letter-spacing: 5px;
+    min-height: 60px;
+    margin-bottom: 30px;
+}
+
+#logic-options {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    max-width: 650px;
+}
+
+.logic-option {
+    min-width: 100px;
+    padding: 14px 24px;
+
+    background: #111;
+    color: white;
+
+    border: 1px solid #444;
+    cursor: pointer;
+
+    font-size: 20px;
+
+    transition: 0.2s;
+}
+
+.logic-option:hover {
+    border-color: white;
+    transform: scale(1.05);
+}
+
+.logic-option.selected {
+    border-color: white;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+#logic-timer {
+    margin-top: 30px;
+    color: #888;
+    font-size: 16px;
+    letter-spacing: 2px;
+}
+
+#logic-submit {
+    margin-top: 15px;
+    padding: 12px 30px;
+
+    background: transparent;
+    color: white;
+
+    border: 1px solid #555;
+    cursor: pointer;
+
+    letter-spacing: 3px;
+    transition: 0.2s;
+}
+
+#logic-submit:hover {
+    border-color: white;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+/* =========================
+   CHALLENGE 4 RESULT
+========================= */
+
+#logic-result-screen {
+    display: none;
+    min-height: 100vh;
+
+    background:
+        radial-gradient(
+            circle at center,
+            #111 0%,
+            #030303 60%,
+            #000 100%
+        );
+
+    color: white;
+}
+/* =========================
+   PATTERN CHALLENGE
+========================= */
+
+#pattern-screen {
+    display: none;
+    min-height: 100vh;
+
+    background:
+        radial-gradient(
+            circle at center,
+            #151515 0%,
+            #050505 55%,
+            #000 100%
+        );
+
+    color: white;
+
+    position: relative;
+    overflow: hidden;
+}
+
+.pattern-container {
+    min-height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    text-align: center;
+
+    padding: 30px;
+}
+
+.pattern-container h1 {
+    font-size: 42px;
+    letter-spacing: 8px;
+    margin: 0 0 15px;
+}
+
+#pattern-message {
+    color: #888;
+    font-size: 17px;
+    margin-bottom: 30px;
+}
+
+#pattern-display {
+    min-width: 350px;
+    min-height: 80px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 20px;
+
+    background: #080808;
+    border: 1px solid #333;
+
+    font-size: 42px;
+    letter-spacing: 12px;
+
+    margin-bottom: 30px;
+}
+
+#pattern-options {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+
+    gap: 12px;
+
+    max-width: 600px;
+}
+
+.pattern-option {
+    min-width: 70px;
+
+    padding: 14px 20px;
+
+    background: #111;
+    color: white;
+
+    border: 1px solid #444;
+
+    cursor: pointer;
+
+    font-size: 26px;
+
+    transition: 0.2s;
+}
+
+.pattern-option:hover {
+    border-color: white;
+    transform: scale(1.05);
+}
+
+.pattern-option.selected {
+    border-color: white;
+
+    box-shadow:
+        0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+#selected-pattern {
+    min-height: 45px;
+
+    margin-top: 25px;
+
+    font-size: 30px;
+    letter-spacing: 10px;
+}
+
+#pattern-timer {
+    margin-top: 25px;
+
+    color: #888;
+
+    font-size: 16px;
+    letter-spacing: 2px;
+}
+
+#pattern-submit {
+    margin-top: 15px;
+
+    padding: 12px 30px;
+
+    background: transparent;
+    color: white;
+
+    border: 1px solid #555;
+
+    cursor: pointer;
+
+    letter-spacing: 3px;
+
+    transition: 0.2s;
+}
+
+#pattern-submit:hover {
+    border-color: white;
+
+    box-shadow:
+        0 0 15px rgba(255, 255, 255, 0.2);
+}
+/* =========================
+   CHALLENGE 5 RESULT
+========================= */
+
+#pattern-result-screen {
+    display: none;
+    min-height: 100vh;
+
+    background:
+        radial-gradient(
+            circle at center,
+            #111 0%,
+            #030303 60%,
+            #000 100%
+        );
+
+    color: white;
+}
+/* =========================
+   FINAL CHALLENGE
+========================= */
+
+#final-screen {
+    display: none;
+    min-height: 100vh;
+
+    background:
+        radial-gradient(
+            circle at center,
+            #160000 0%,
+            #050000 55%,
+            #000 100%
+        );
+
+    color: white;
+
+    position: relative;
+    overflow: hidden;
+}
+
+.final-container {
+    min-height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    text-align: center;
+
+    padding: 30px;
+}
+
+.final-container h1 {
+    font-size: 48px;
+    letter-spacing: 10px;
+
+    margin: 0 0 20px;
+}
+
+#final-message {
+    color: #999;
+    font-size: 18px;
+
+    margin-bottom: 35px;
+}
+
+#final-target {
+    font-size: 22px;
+    letter-spacing: 4px;
+
+    margin-bottom: 25px;
+}
+
+#final-timer {
+    font-size: 72px;
+    font-weight: bold;
+    letter-spacing: 5px;
+
+    margin: 20px 0 40px;
+}
+
+#final-start,
+#final-stop {
+    padding: 15px 45px;
+
+    background: transparent;
+    color: white;
+
+    border: 1px solid #555;
+
+    cursor: pointer;
+
+    font-size: 16px;
+    letter-spacing: 4px;
+
+    transition: 0.2s;
+}
+
+#final-start:hover,
+#final-stop:hover {
+    border-color: white;
+
+    box-shadow:
+        0 0 20px rgba(255, 255, 255, 0.25);
+}
+
+#final-stop {
+    display: none;
+}
+/* =========================
+   LEADERBOARD
+========================= */
+
+#leaderboard-screen {
+    display: none;
+    min-height: 100vh;
+
+    background:
+        radial-gradient(
+            circle at center,
+            #111 0%,
+            #030303 60%,
+            #000 100%
+        );
+
+    color: white;
+}
+
+.leaderboard-container {
+    min-height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    padding: 60px 30px;
+}
+
+.leaderboard-container h1 {
+    font-size: 42px;
+    letter-spacing: 8px;
+    margin: 10px 0 15px;
+}
+
+.leaderboard-subtitle {
+    color: #777;
+    font-size: 16px;
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+#leaderboard-list {
+    width: 100%;
+    max-width: 900px;
+
+    border: 1px solid #333;
+    background: #080808;
+}
+
+.leaderboard-header,
+.leaderboard-entry {
+    display: grid;
+
+    grid-template-columns:
+        80px
+        1fr
+        100px
+        160px
+        140px;
+
+    align-items: center;
+    text-align: center;
+
+    padding: 18px 15px;
+}
+
+.leaderboard-header {
+    color: #777;
+
+    border-bottom: 1px solid #333;
+
+    font-size: 13px;
+    letter-spacing: 2px;
+}
+
+.leaderboard-entry {
+    border-bottom: 1px solid #222;
+
+    font-size: 16px;
+
+    transition: 0.2s;
+}
+
+.leaderboard-entry:last-child {
+    border-bottom: none;
+}
+
+.leaderboard-entry:hover {
+    background: #111;
+}
+
+.leaderboard-rank {
+    font-size: 20px;
+}
+
+.leaderboard-time {
+    letter-spacing: 1px;
+}
+
+.leaderboard-accuracy {
+    color: #aaa;
+}
+
+#leaderboard-back {
+    margin-top: 35px;
+
+    padding: 12px 35px;
+
+    background: transparent;
+    color: white;
+
+    border: 1px solid #555;
+
+    cursor: pointer;
+
+    letter-spacing: 3px;
+
+    transition: 0.2s;
+}
+
+#leaderboard-back:hover {
+    border-color: white;
+
+    box-shadow:
+        0 0 15px rgba(255, 255, 255, 0.2);
+}
