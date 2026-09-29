@@ -28,6 +28,8 @@ const psychoNext = document.getElementById("psycho-next");
 
 let playerGender = "";
 let playerName = "";
+let dialogues = [];
+let dialogueIndex = 0;
 
 
 // ---------- START GAME ----------
@@ -122,51 +124,75 @@ hallwayContinue.addEventListener("click", function () {
 
 function startPsychoDialogue() {
 
-    // Get the name directly from the input
-    const name = nameInput.value.trim();
+    if (playerName === "") {
+        playerName = "Stranger";
+    }
 
-    // If no name was entered, use Stranger
-    const finalName = name || "Stranger";
-
-    // Show the Psycho label
     psychoName.textContent = "PSYCHO";
 
-    // Dialogue
-    const dialogue =
-        "Good evening, " + finalName + ".";
+    // All Psycho dialogue
+    dialogues = [
 
-    // Clear previous dialogue
+        "Good evening, " + playerName + ".",
+
+        "Do you know why you're here?",
+
+        "You were chosen because someone called you intelligent.",
+
+        "But intelligence is easy to measure.",
+
+        "Let's see how useful it really is.",
+
+        "There will be five challenges.",
+
+        "Every challenge will have its own clock.",
+
+        "Your time will be recorded.",
+
+        "Finish all five challenges...",
+
+        "and you will be free."
+
+    ];
+
+    dialogueIndex = 0;
+
+    showDialogue(dialogues[dialogueIndex]);
+}
+function showDialogue(dialogue) {
+
     psychoText.textContent = "";
 
-    // Hide continue button while typing
     psychoNext.classList.remove("visible");
 
     let index = 0;
 
-    // Typewriter effect
     const typing = setInterval(function () {
 
         psychoText.textContent += dialogue[index];
 
         index++;
 
-        // When dialogue is finished
         if (index >= dialogue.length) {
 
             clearInterval(typing);
 
             psychoNext.classList.add("visible");
+
         }
 
-    }, 60);
-
+    }, 45);
 }
 
 // ---------- NEXT DIALOGUE ----------
-
 psychoNext.addEventListener("click", function () {
 
-    psychoText.textContent =
-        "Don't be afraid. You haven't done anything wrong. Yet.";
+    dialogueIndex++;
+
+    if (dialogueIndex < dialogues.length) {
+
+        showDialogue(dialogues[dialogueIndex]);
+
+    }
 
 });
