@@ -881,3 +881,457 @@ h1 {
 
     cursor: pointer;
 }
+/* =========================
+   MEMORY CHALLENGE
+========================= */
+
+#memory-screen {
+    display: none;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at center, #151515 0%, #050505 55%, #000 100%);
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.memory-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 30px;
+}
+
+.challenge-label {
+    color: #777;
+    font-size: 14px;
+    letter-spacing: 5px;
+    margin-bottom: 15px;
+}
+
+.memory-container h1 {
+    font-size: 42px;
+    letter-spacing: 8px;
+    margin: 0 0 15px;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
+}
+
+#memory-message {
+    color: #aaa;
+    font-size: 18px;
+    margin-bottom: 35px;
+}
+
+#memory-sequence {
+    min-height: 90px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+    font-size: 48px;
+    margin-bottom: 30px;
+}
+
+#memory-options {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    max-width: 600px;
+}
+
+.memory-option {
+    width: 65px;
+    height: 65px;
+    background: #111;
+    border: 1px solid #444;
+    color: white;
+    font-size: 30px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.memory-option:hover {
+    border-color: white;
+    transform: scale(1.08);
+}
+
+.memory-option.selected {
+    border-color: #fff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.35);
+    transform: scale(1.08);
+}
+
+#memory-timer {
+    margin-top: 30px;
+    color: #888;
+    font-size: 16px;
+    letter-spacing: 2px;
+}
+
+#memory-submit {
+    margin-top: 20px;
+    padding: 12px 30px;
+    background: transparent;
+    color: white;
+    border: 1px solid #555;
+    cursor: pointer;
+    letter-spacing: 3px;
+    transition: 0.2s;
+}
+
+#memory-submit:hover {
+    border-color: white;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+.selected-label {
+    margin-top: 10px;
+    margin-bottom: 8px;
+    color: #666;
+    font-size: 12px;
+    letter-spacing: 3px;
+}
+
+#selected-sequence {
+    min-height: 50px;
+    min-width: 300px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+
+    padding: 10px 20px;
+    margin-bottom: 25px;
+
+    border-bottom: 1px solid #333;
+
+    font-size: 32px;
+}
+/* =========================
+   MEMORY RESULT
+========================= */
+
+#memory-result-screen {
+    display: none;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at center, #111 0%, #030303 60%, #000 100%);
+    color: white;
+}
+
+.result-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.result-label {
+    color: #666;
+    font-size: 13px;
+    letter-spacing: 5px;
+}
+
+.result-container h1 {
+    font-size: 48px;
+    letter-spacing: 10px;
+    margin: 10px 0 35px;
+}
+
+#result-message {
+    color: #aaa;
+    font-size: 20px;
+    margin-bottom: 15px;
+}
+
+#result-time {
+    color: white;
+    font-size: 16px;
+    letter-spacing: 3px;
+    margin-bottom: 40px;
+}
+
+#result-continue {
+    padding: 13px 35px;
+    background: transparent;
+    color: white;
+    border: 1px solid #555;
+    cursor: pointer;
+    letter-spacing: 3px;
+    transition: 0.2s;
+}
+
+#result-continue:hover {
+    border-color: white;
+    box-shadow: 0 0 18px rgba(255, 255, 255, 0.25);
+}
+/* =========================
+   WORD GUESS CHALLENGE
+========================= */
+
+#word-screen {
+    display: none;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at center, #151515 0%, #050505 55%, #000 100%);
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.word-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 30px;
+}
+
+.word-container h1 {
+    font-size: 42px;
+    letter-spacing: 8px;
+    margin: 0 0 30px;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
+}
+
+#word-clue {
+    max-width: 600px;
+    color: #aaa;
+    font-size: 19px;
+    line-height: 1.6;
+    margin-bottom: 35px;
+}
+
+#word-display {
+    font-size: 38px;
+    letter-spacing: 12px;
+    margin-bottom: 35px;
+    min-height: 50px;
+}
+
+#word-input {
+    width: 280px;
+    padding: 14px 18px;
+    background: transparent;
+    color: white;
+    border: 1px solid #555;
+    outline: none;
+    text-align: center;
+    font-size: 17px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+#word-input:focus {
+    border-color: white;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
+}
+
+#word-timer {
+    margin-top: 25px;
+    color: #888;
+    font-size: 16px;
+    letter-spacing: 2px;
+}
+
+#word-message {
+    min-height: 25px;
+    margin-top: 15px;
+    color: #aaa;
+}
+
+#word-submit {
+    margin-top: 20px;
+    padding: 12px 30px;
+    background: transparent;
+    color: white;
+    border: 1px solid #555;
+    cursor: pointer;
+    letter-spacing: 3px;
+    transition: 0.2s;
+}
+
+#word-submit:hover {
+    border-color: white;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+/* =========================
+   WORD RESULT
+========================= */
+
+#word-result-screen {
+    display: none;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at center, #111 0%, #030303 60%, #000 100%);
+    color: white;
+}
+/* =========================
+   OBSERVATION CHALLENGE
+========================= */
+
+#observation-screen {
+    display: none;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at center, #151515 0%, #050505 55%, #000 100%);
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.observation-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 30px;
+}
+
+.observation-container h1 {
+    font-size: 42px;
+    letter-spacing: 8px;
+    margin: 0 0 15px;
+}
+
+#observation-message {
+    color: #888;
+    font-size: 17px;
+    margin-bottom: 30px;
+}
+
+#observation-scene {
+    width: 600px;
+    height: 330px;
+    max-width: 90vw;
+
+    position: relative;
+
+    border: 1px solid #333;
+
+    background:
+        linear-gradient(
+            to bottom,
+            #0b0b0b 0%,
+            #090909 70%,
+            #050505 70%,
+            #050505 100%
+        );
+
+    margin-bottom: 25px;
+
+    overflow: hidden;
+
+    box-shadow:
+        inset 0 0 50px rgba(0, 0, 0, 0.9);
+        /* Objects inside the observation room */
+
+.observation-object {
+    position: absolute;
+
+    font-size: 42px;
+
+    user-select: none;
+
+    filter:
+        grayscale(30%)
+        drop-shadow(0 0 5px rgba(255, 255, 255, 0.15));
+}
+#observation-scene::before {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    height: 30%;
+
+    border-top: 1px solid #151515;
+
+    background:
+        repeating-linear-gradient(
+            90deg,
+            #070707 0px,
+            #070707 50px,
+            #0b0b0b 51px,
+            #0b0b0b 100px
+        );
+}
+}
+
+#observation-question {
+    color: #aaa;
+    font-size: 19px;
+    margin: 20px 0;
+}
+
+#observation-options {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    max-width: 600px;
+}
+
+.observation-option {
+    min-width: 100px;
+    padding: 13px 20px;
+
+    background: #111;
+    color: white;
+
+    border: 1px solid #444;
+    cursor: pointer;
+
+    font-size: 18px;
+
+    transition: 0.2s;
+}
+
+.observation-option:hover {
+    border-color: white;
+    transform: scale(1.05);
+}
+
+.observation-option.selected {
+    border-color: white;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+#observation-timer {
+    margin-top: 25px;
+    color: #888;
+    font-size: 16px;
+    letter-spacing: 2px;
+}
+
+#observation-submit {
+    margin-top: 15px;
+    padding: 12px 30px;
+
+    background: transparent;
+    color: white;
+
+    border: 1px solid #555;
+    cursor: pointer;
+
+    letter-spacing: 3px;
+    transition: 0.2s;
+}
+
+#observation-submit:hover {
+    border-color: white;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
