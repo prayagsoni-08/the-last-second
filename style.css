@@ -1777,8 +1777,8 @@ h1 {
 
     grid-template-columns:
         80px
-        1fr
-        100px
+        1.5fr
+        140px
         160px
         140px;
 
@@ -1847,4 +1847,109 @@ h1 {
 
     box-shadow:
         0 0 15px rgba(255, 255, 255, 0.2);
+}
+/* RESTART GAME */
+
+#restart-game-btn {
+    display: none;
+    position: fixed;
+    bottom: 25px;
+    left: 25px;
+
+    padding: 10px 22px;
+
+    background: transparent;
+    color: #888;
+
+    border: 1px solid #444;
+
+    cursor: pointer;
+
+    font-size: 13px;
+    letter-spacing: 2px;
+
+    z-index: 1000;
+
+    transition: 0.2s;
+}
+
+#restart-game-btn:hover {
+    color: white;
+    border-color: white;
+}
+
+
+/* RESTART CONFIRMATION */
+
+#restart-confirm {
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(0, 0, 0, 0.85);
+
+    align-items: center;
+    justify-content: center;
+
+    z-index: 2000;
+}
+
+.restart-box {
+    width: 380px;
+
+    padding: 40px;
+
+    text-align: center;
+
+    background: #080808;
+
+    border: 1px solid #444;
+
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+}
+
+.restart-box h2 {
+    margin-bottom: 15px;
+
+    font-size: 24px;
+
+    letter-spacing: 4px;
+}
+
+.restart-box p {
+    color: #777;
+
+    margin-bottom: 30px;
+}
+
+.restart-buttons {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 15px;
+}
+
+.restart-buttons button {
+    padding: 12px 25px;
+
+    background: transparent;
+
+    color: white;
+
+    border: 1px solid #555;
+
+    cursor: pointer;
+
+    letter-spacing: 2px;
+
+    transition: 0.2s;
+}
+
+.restart-buttons button:hover {
+    border-color: white;
+
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
 }

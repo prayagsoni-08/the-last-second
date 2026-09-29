@@ -611,6 +611,17 @@ const finalStart =
 
 const finalStop =
     document.getElementById("final-stop");
+const restartGameBtn =
+    document.getElementById("restart-game-btn");
+
+const restartConfirm =
+    document.getElementById("restart-confirm");
+
+const restartConfirmBtn =
+    document.getElementById("restart-confirm-btn");
+
+const restartCancelBtn =
+    document.getElementById("restart-cancel-btn");
 
 let finalTargetTime = 10;
 let finalStartTime = 0;
@@ -626,6 +637,9 @@ const leaderboardEntries =
 
 const leaderboardBack =
     document.getElementById("leaderboard-back");
+
+const startLeaderboardBtn =
+    document.getElementById("start-leaderboard-btn");
 
 // TEMPORARY LEADERBOARD DATA
 
@@ -687,7 +701,7 @@ async function displayLeaderboard() {
 
         entry.innerHTML = `
             <span class="leaderboard-rank">
-                #${index + 1}
+                ${index + 1}
             </span>
 
             <span>
@@ -703,7 +717,7 @@ async function displayLeaderboard() {
             </span>
 
             <span class="leaderboard-accuracy">
-                ±${Number(player.accuracy).toFixed(2)}s
+                ${Number(player.accuracy).toFixed(2)}s
             </span>
         `;
 
@@ -714,10 +728,25 @@ async function displayLeaderboard() {
 
 function openLeaderboard() {
 
+    // Hide game screens
+    startScreen.style.display = "none";
+    memoryScreen.style.display = "none";
+    wordScreen.style.display = "none";
+    observationScreen.style.display = "none";
+    logicScreen.style.display = "none";
+    logicResultScreen.style.display = "none";
+    patternScreen.style.display = "none";
+    patternResultScreen.style.display = "none";
+    psychoScreen.style.display = "none";
+    finalScreen.style.display = "none";
+
+    // Hide restart button
+    restartGameBtn.style.display = "none";
+
+    // Show leaderboard
     leaderboardScreen.style.display = "block";
 
     displayLeaderboard();
-
 }
 leaderboardBack.addEventListener(
     "click",
@@ -728,6 +757,16 @@ leaderboardBack.addEventListener(
 
         startScreen.style.display =
             "block";
+
+    }
+);
+startLeaderboardBtn.addEventListener(
+    "click",
+    function() {
+
+        startScreen.style.display = "none";
+
+        openLeaderboard();
 
     }
 );
@@ -757,6 +796,7 @@ let dialogueIndex = 0;
 
 startButton.addEventListener("click", function () {
     resetPlayerScore();
+    
 
     startScreen.style.display = "none";
 
@@ -881,7 +921,13 @@ function startPsychoDialogue() {
 
     showDialogue(dialogues[dialogueIndex]);
 }
+let dialogueTyping = null;
 function showDialogue(dialogue) {
+
+    if (dialogueTyping !== null) {
+        clearInterval(dialogueTyping);
+        dialogueTyping = null;
+    }
 
     psychoText.textContent = "";
 
@@ -889,7 +935,7 @@ function showDialogue(dialogue) {
 
     let index = 0;
 
-    const typing = setInterval(function () {
+    dialogueTyping = setInterval(function() {
 
         psychoText.textContent += dialogue[index];
 
@@ -897,7 +943,9 @@ function showDialogue(dialogue) {
 
         if (index >= dialogue.length) {
 
-            clearInterval(typing);
+            clearInterval(dialogueTyping);
+
+            dialogueTyping = null;
 
             psychoNext.classList.add("visible");
 
@@ -942,6 +990,7 @@ psychoNext.addEventListener("click", function() {
 });
 
 function startMemoryChallenge() {
+    restartGameBtn.style.display = "block";
 
     memoryScreen.style.display = "block";
 
@@ -2082,3 +2131,59 @@ async function saveLeaderboardScore() {
         data
     );
 }
+restartGameBtn.addEventListener(
+    "click",
+    function() {
+
+        restartConfirm.style.display =
+            "flex";
+
+        // Stop every challenge timer
+        clearInterval(memoryTimerInterval);
+        clearInterval(wordTimerInterval);
+        clearInterval(observationTimerInterval);
+        clearInterval(logicTimerInterval);
+        clearInterval(patternTimerInterval);
+        clearInterval(finalTimerInterval);
+
+    }
+);
+
+
+restartCancelBtn.addEventListener(
+    "click",
+    function() {
+
+        restartConfirm.style.display =
+            "none";
+
+    }
+);
+restartConfirmBtn.addEventListener(
+    "click",
+    function() {
+
+        restartConfirm.style.display =
+            "none";
+
+        // Reset challenge scores
+        resetPlayerScore();
+
+        // Hide every game screen
+        startScreen.style.display = "none";
+        memoryScreen.style.display = "none";
+        wordScreen.style.display = "none";
+        observationScreen.style.display = "none";
+        logicScreen.style.display = "none";
+        logicResultScreen.style.display = "none";
+        patternScreen.style.display = "none";
+        patternResultScreen.style.display = "none";
+        psychoScreen.style.display = "none";
+        finalScreen.style.display = "none";
+        leaderboardScreen.style.display = "none";
+
+        // Start Challenge 1 again
+        startMemoryChallenge();
+
+    }
+);
