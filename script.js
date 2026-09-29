@@ -1483,7 +1483,7 @@ observationResultContinue.addEventListener(
         observationResultScreen.style.display =
             "none";
 
-        console.log("Ready for Challenge 4");
+        startLogicChallenge();
 
     }
 );
@@ -1621,9 +1621,7 @@ logicResultContinue.addEventListener(
     function() {
 
         logicResultScreen.style.display = "none";
-
-        console.log("Ready for Challenge 5");
-
+        startPatternChallenge();
     }
 );
 
