@@ -1,3 +1,10 @@
+const SUPABASE_URL = "https://ovrqybbmrhzfsglwchoc.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_COGRe74WATPeKdJ72_NrUw_fK6AlowZ";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+);
 // ---------- GET HTML ELEMENTS ----------
 
 const startButton = document.getElementById("start-btn");
@@ -644,28 +651,39 @@ let leaderboardData = [
         accuracy: 0.02
     }
 ];
-function displayLeaderboard() {
+async function displayLeaderboard() {
+
+    leaderboardEntries.innerHTML =
+        "<p style='text-align:center; padding:30px;'>LOADING...</p>";
+
+    const { data, error } = await supabaseClient
+        .from("leaderboard")
+        .select("name, gender, total_time, accuracy")
+        .order("total_time", { ascending: true })
+        .order("accuracy", { ascending: true })
+        .limit(100);
+
+    if (error) {
+
+        console.error(
+            "LEADERBOARD LOAD ERROR:",
+            error
+        );
+
+        leaderboardEntries.innerHTML =
+            "<p style='text-align:center; padding:30px;'>FAILED TO LOAD LEADERBOARD</p>";
+
+        return;
+    }
 
     leaderboardEntries.innerHTML = "";
 
-    leaderboardData.sort(function(a, b) {
-
-        if (a.totalTime !== b.totalTime) {
-            return a.totalTime - b.totalTime;
-        }
-
-        return a.accuracy - b.accuracy;
-
-    });
-
-    leaderboardData.forEach(function(player, index) {
+    data.forEach(function(player, index) {
 
         const entry =
             document.createElement("div");
 
-        entry.classList.add(
-            "leaderboard-entry"
-        );
+        entry.classList.add("leaderboard-entry");
 
         entry.innerHTML = `
             <span class="leaderboard-rank">
@@ -681,19 +699,19 @@ function displayLeaderboard() {
             </span>
 
             <span class="leaderboard-time">
-                ${player.totalTime.toFixed(2)}s
+                ${Number(player.total_time).toFixed(2)}s
             </span>
 
             <span class="leaderboard-accuracy">
-                ±${player.accuracy.toFixed(2)}s
+                ±${Number(player.accuracy).toFixed(2)}s
             </span>
         `;
 
         leaderboardEntries.appendChild(entry);
 
     });
-
 }
+
 function openLeaderboard() {
 
     leaderboardScreen.style.display = "block";
@@ -738,6 +756,7 @@ let dialogueIndex = 0;
 // ---------- START GAME ----------
 
 startButton.addEventListener("click", function () {
+    resetPlayerScore();
 
     startScreen.style.display = "none";
 
@@ -1909,7 +1928,7 @@ finalStop.addEventListener("click", function() {
         Math.abs(finalTime - finalTargetTime);
     finalAccuracy = parseFloat(difference.toFixed(2));
 
-    if (difference <= 6.05) {
+    if (difference <= 0.05) {
 
     totalChallengeTime =
         memoryTime +
@@ -1917,17 +1936,7 @@ finalStop.addEventListener("click", function() {
         observationTime +
         logicTime +
         patternTime;
-    leaderboardData.push({
-
-    name: playerName,
-
-    gender: playerGender,
-
-    totalTime: totalChallengeTime,
-
-    accuracy: finalAccuracy
-
-});
+    saveLeaderboardScore();
 
     finalMessage.textContent =
         "You stopped it in time.";
@@ -2047,4 +2056,31 @@ function startWinEnding() {
 
     showDialogue(dialogues[dialogueIndex]);
 
+}
+async function saveLeaderboardScore() {
+
+    const { data, error } = await supabaseClient
+        .from("leaderboard")
+        .insert({
+            name: playerName,
+            gender: playerGender,
+            total_time: Number(totalChallengeTime.toFixed(2)),
+            accuracy: Number(finalAccuracy.toFixed(2))
+        })
+        .select();
+
+    if (error) {
+
+        console.error(
+            "LEADERBOARD SAVE ERROR:",
+            error
+        );
+
+        return;
+    }
+
+    console.log(
+        "LEADERBOARD SCORE SAVED:",
+        data
+    );
 }
