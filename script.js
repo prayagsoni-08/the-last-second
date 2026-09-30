@@ -1996,40 +1996,34 @@ finalStop.addEventListener("click", function() {
     finalAccuracy = parseFloat(difference.toFixed(2));
 
     if (difference <= 0.05) {
-
     totalChallengeTime =
-        memoryTime +
-        wordTime +
-        observationTime +
-        logicTime +
-        patternTime;
+        memoryTime + wordTime + observationTime + logicTime + patternTime;
+
     saveLeaderboardScore();
 
     finalMessage.textContent =
-        "You stopped it in time.";
+        "STOPPED: " + finalTime.toFixed(2) +
+        " SECONDS | ACCURACY: " + finalAccuracy.toFixed(2) + " SECONDS";
 
-    console.log(
-        "5-CHALLENGE TOTAL:",
-        totalChallengeTime.toFixed(2),
-        "seconds"
-    );
-    startWinEnding();
+    console.log("5-CHALLENGE TOTAL:", totalChallengeTime.toFixed(2), "seconds");
+    console.log("FINAL RESULT: PLAYER WINS", finalTime.toFixed(2));
 
-    // rest of your existing code...
+    setTimeout(function() {
+        startWinEnding();
+    }, 2500);
 
+} else {
 
-    } else {
+    finalMessage.textContent =
+        "STOPPED: " + finalTime.toFixed(2) +
+        " SECONDS | ACCURACY: " + finalAccuracy.toFixed(2) + " SECONDS";
 
-        finalMessage.textContent =
-            "Too late.";
+    console.log("FINAL RESULT: PSYCHO WINS", finalTime.toFixed(2));
 
-        console.log(
-            "FINAL RESULT: PSYCHO WINS",
-            finalTime.toFixed(2)
-        );
+    setTimeout(function() {
         startLoseEnding();
-
-    }
+    }, 2500);
+}
 
 });
 function resetPlayerScore() {
