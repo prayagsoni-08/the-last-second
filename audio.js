@@ -245,6 +245,7 @@
     let lastScreen = null;
     let currentLoop = null;
     let unlocked = false;
+    let justUnlocked = false;   // true only during the click that unlocked sound
 
     function visibleScreen() {
 
@@ -315,7 +316,10 @@
         // Browsers only allow sound after a click
         if (!unlocked) {
             unlocked = true;
+            justUnlocked = true;
+            setTimeout(function () { justUnlocked = false; }, 0);
             if (currentLoop) loops[currentLoop].start();
+            updateMuteLabel();
         }
 
         if (event.target.closest("button") &&
@@ -336,25 +340,54 @@
 
     }, true);
 
-    // ---------- MUTE BUTTON ----------
+    // ---------- SOUND BUTTON ----------
+    // Looks are in style.css (.sound-toggle). Three states:
+    //   ENABLE SOUND  - waiting for the first click (browser rule)
+    //   SOUND ON      - playing
+    //   SOUND OFF     - muted (crossed-out speaker)
+
+    const ICON =
+        '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" ' +
+        'stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+        'stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M11 5 6 9H2v6h4l5 4V5z"/>' +
+        '<path class="wave" d="M15.5 8.5a5 5 0 0 1 0 7"/>' +
+        '<path class="wave" d="M18.5 5.5a9 9 0 0 1 0 13"/>' +
+        '<path class="cross" d="M16 9l6 6M22 9l-6 6"/>' +
+        '</svg>';
 
     const muteBtn = document.createElement("button");
 
     muteBtn.id = "mute-btn";
     muteBtn.type = "button";
+    muteBtn.className = "sound-toggle";
+    muteBtn.setAttribute("role", "switch");
+    muteBtn.innerHTML = ICON + '<span class="sound-label"></span>';
 
-    muteBtn.style.cssText =
-        "position:fixed; bottom:0.9rem; right:0.9rem; z-index:20;" +
-        "margin:0; padding:0.4em 1em; font-size:0.9rem;" +
-        "color:var(--chalk-dim); border-color:var(--board-line);" +
-        "background:rgba(14,23,20,0.85);";
+    const muteLabel = muteBtn.querySelector(".sound-label");
 
     function updateMuteLabel() {
-        muteBtn.textContent = muted ? "SOUND OFF" : "SOUND ON";
-        muteBtn.setAttribute("aria-pressed", String(muted));
+
+        const waiting = !unlocked && !muted;
+
+        muteBtn.classList.toggle("is-off", muted);
+        muteBtn.classList.toggle("is-waiting", waiting);
+
+        muteBtn.setAttribute("aria-checked", String(!muted));
+
+        if (muted) {
+            muteLabel.textContent = "SOUND OFF";
+            muteBtn.title = "Sound is off. Click (or press M) to turn it on";
+        } else if (waiting) {
+            muteLabel.textContent = "ENABLE SOUND";
+            muteBtn.title = "Click anywhere to start the sound";
+        } else {
+            muteLabel.textContent = "SOUND ON";
+            muteBtn.title = "Sound is on. Click (or press M) to turn it off";
+        }
     }
 
-    muteBtn.addEventListener("click", function () {
+    function toggleMute() {
 
         muted = !muted;
 
@@ -371,6 +404,40 @@
         }
 
         updateMuteLabel();
+    }
+
+    muteBtn.addEventListener("click", function (event) {
+
+        // The very first click on the page only enables sound
+        if (justUnlocked) return;
+
+        toggleMute();
+
+        // After a mouse or touch click, hand the keyboard back to the game
+        // (ENTER / SPACE would otherwise toggle sound again)
+        if (event.detail > 0) muteBtn.blur();
+    });
+
+    // M toggles sound (not while typing in a box)
+    document.addEventListener("keydown", function (event) {
+
+        if (event.key !== "m" && event.key !== "M") return;
+
+        if (event.ctrlKey || event.altKey || event.metaKey) return;
+
+        const tag = document.activeElement ?
+            document.activeElement.tagName : "";
+
+        if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+        if (!unlocked) {
+            unlocked = true;
+            if (currentLoop && !muted) loops[currentLoop].start();
+            updateMuteLabel();
+            return;
+        }
+
+        toggleMute();
     });
 
     updateMuteLabel();

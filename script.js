@@ -29,6 +29,8 @@ const nameError = document.getElementById("name-error");
 const psychoText = document.getElementById("psycho-text");
 const psychoName = document.getElementById("psycho-name");
 const psychoNext = document.getElementById("psycho-next");
+const psychoSkip = document.getElementById("psycho-skip");
+const psychoActions = document.getElementById("psycho-actions");
 // MEMORY CHALLENGE
 const memoryScreen = document.getElementById("memory-screen");
 const memoryMessage = document.getElementById("memory-message");
@@ -53,6 +55,7 @@ const resultContinue =
 let memoryQuestion = [];
 let playerAnswer = [];
 let memoryStartTime = 0;
+let memoryTimerInterval = null;
 const memoryQuestions = [
     ["🔑", "🕯️", "📕", "⏰", "🌹"],
     ["🎲", "🧸", "🔔", "📷", "🍎"],
@@ -665,6 +668,16 @@ let leaderboardData = [
         accuracy: 0.02
     }
 ];
+function escapeHtml(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 async function displayLeaderboard() {
 
     leaderboardEntries.innerHTML =
@@ -705,11 +718,11 @@ async function displayLeaderboard() {
             </span>
 
             <span>
-                ${player.name}
+                ${escapeHtml(player.name)}
             </span>
 
             <span>
-                ${player.gender}
+                ${escapeHtml(player.gender)}
             </span>
 
             <span class="leaderboard-time">
@@ -933,11 +946,15 @@ function updatePsychoButton() {
 
     if (isIntro && isLastLine) {
         psychoNext.textContent = "START CHALLENGE 01";
-        psychoNext.classList.add("centered");
     } else {
         psychoNext.textContent = "CONTINUE";
-        psychoNext.classList.remove("centered");
     }
+
+    // Last line of the opening scene: one button, centred
+    psychoActions.classList.toggle("centered", isIntro && isLastLine);
+
+    // Nothing left to skip on the last line
+    psychoSkip.style.display = isLastLine ? "none" : "";
 }
 
 function showDialogue(dialogue) {
@@ -973,6 +990,56 @@ function showDialogue(dialogue) {
 
     }, 45);
 }
+
+// ---------- FAST-FORWARD PSYCHO ----------
+
+// Show the whole current line at once
+function finishDialogueTyping() {
+
+    if (dialogueTyping === null) return false;
+
+    clearInterval(dialogueTyping);
+
+    dialogueTyping = null;
+
+    psychoText.textContent = dialogues[dialogueIndex];
+
+    psychoNext.classList.add("visible");
+
+    return true;
+}
+
+// Jump straight to the last line of the scene
+function skipDialogueScene() {
+
+    if (dialogues.length === 0) return;
+
+    if (dialogueTyping !== null) {
+        clearInterval(dialogueTyping);
+        dialogueTyping = null;
+    }
+
+    dialogueIndex = dialogues.length - 1;
+
+    psychoText.textContent = dialogues[dialogueIndex];
+
+    updatePsychoButton();
+
+    psychoNext.classList.add("visible");
+}
+
+psychoSkip.addEventListener("click", skipDialogueScene);
+
+// Tap / click the box while a line is typing to show it instantly
+document.querySelector(".psycho-dialogue").addEventListener(
+    "click",
+    function(event) {
+
+        if (event.target.closest("button")) return;
+
+        finishDialogueTyping();
+    }
+);
 
 // ---------- NEXT DIALOGUE ----------
 psychoNext.addEventListener("click", function() {
@@ -1041,7 +1108,9 @@ function startMemoryChallenge() {
     memoryTimer.textContent =
         "MEMORIZE: " + countdown;
 
-    const countdownTimer = setInterval(function () {
+    clearInterval(memoryTimerInterval);
+
+    memoryTimerInterval = setInterval(function () {
 
         countdown--;
         if (countdown > 0) {
@@ -1051,7 +1120,7 @@ function startMemoryChallenge() {
 
 } else {
 
-    clearInterval(countdownTimer);
+    clearInterval(memoryTimerInterval);
 
     memorySequence.textContent = "";
 
@@ -2156,7 +2225,7 @@ restartGameBtn.addEventListener(
 
         // Stop every challenge timer
         clearInterval(memoryTimerInterval);
-        clearInterval(wordTimerInterval);
+        clearInterval(wordCountdown);
         clearInterval(observationTimerInterval);
         clearInterval(logicTimerInterval);
         clearInterval(patternTimerInterval);
@@ -2190,8 +2259,11 @@ restartConfirmBtn.addEventListener(
         // Hide every game screen
         startScreen.style.display = "none";
         memoryScreen.style.display = "none";
+        memoryResultScreen.style.display = "none";
         wordScreen.style.display = "none";
+        wordResultScreen.style.display = "none";
         observationScreen.style.display = "none";
+        observationResultScreen.style.display = "none";
         logicScreen.style.display = "none";
         logicResultScreen.style.display = "none";
         patternScreen.style.display = "none";
@@ -2205,3 +2277,132 @@ restartConfirmBtn.addEventListener(
 
     }
 );
+
+
+// =====================================================
+// KEYBOARD: ENTER / SPACE press the main button
+// =====================================================
+
+(function () {
+
+    // The main button on each screen
+    const MAIN_BUTTON = {
+        "start-screen": "start-btn",
+        "name-screen": "continue-btn",
+        "school-screen": "enter-school-btn",
+        "hallway-screen": "hallway-continue",
+        "memory-result-screen": "result-continue",
+        "word-result-screen": "word-result-continue",
+        "observation-result-screen": "observation-result-continue",
+        "logic-result-screen": "logic-result-continue",
+        "pattern-result-screen": "pattern-result-continue"
+    };
+
+    // Buttons this handler controls. If one of these still has
+    // focus from a mouse click, it is released first so the key
+    // press is not counted twice.
+    const MANAGED = [
+        "psycho-next", "psycho-skip", "final-start", "final-stop"
+    ].concat(Object.keys(MAIN_BUTTON).map(function (id) {
+        return MAIN_BUTTON[id];
+    }));
+
+    function isShown(element) {
+        return element !== null &&
+            getComputedStyle(element).display !== "none";
+    }
+
+    function currentScreenElement() {
+
+        const sections = document.querySelectorAll("#game > section");
+
+        for (let i = 0; i < sections.length; i++) {
+            if (isShown(sections[i])) return sections[i];
+        }
+
+        return null;
+    }
+
+    document.addEventListener("keydown", function (event) {
+
+        // ESC closes the restart box
+        if (event.key === "Escape" && isShown(restartConfirm)) {
+            document.getElementById("restart-cancel-btn").click();
+            return;
+        }
+
+        const isEnter = event.key === "Enter";
+        const isSpace = event.key === " ";
+
+        if (!isEnter && !isSpace) return;
+
+        if (event.ctrlKey || event.altKey || event.metaKey) return;
+
+        // Holding the key down must not press twice
+        if (event.repeat) {
+            if (isShown(document.getElementById("final-stop"))) {
+                event.preventDefault();
+            }
+            return;
+        }
+
+        // The restart box has its own buttons
+        if (isShown(restartConfirm)) return;
+
+        const active = document.activeElement;
+        const tag = active ? active.tagName : "";
+
+        // Typing: only ENTER in the name box continues
+        if (tag === "INPUT" || tag === "TEXTAREA") {
+            if (!(isEnter && active.id === "player-name")) return;
+        }
+
+        // Any other focused button (answers, SUBMIT, SOUND...) keeps
+        // its normal keyboard behaviour
+        if (tag === "BUTTON" && MANAGED.indexOf(active.id) === -1) return;
+
+        const screen = currentScreenElement();
+
+        if (screen === null) return;
+
+        let target = null;
+
+        if (screen.id === "psycho-screen") {
+
+            event.preventDefault();
+
+            if (tag === "BUTTON") active.blur();
+
+            // First press finishes the typing, the next one continues
+            if (finishDialogueTyping()) return;
+
+            if (psychoNext.classList.contains("visible")) {
+                psychoNext.click();
+            }
+
+            return;
+        }
+
+        if (screen.id === "final-screen") {
+
+            if (isShown(finalStart)) {
+                target = finalStart;
+            } else if (isShown(finalStop)) {
+                target = finalStop;
+            }
+
+        } else if (MAIN_BUTTON[screen.id]) {
+
+            target = document.getElementById(MAIN_BUTTON[screen.id]);
+        }
+
+        if (target === null || !isShown(target) || target.disabled) return;
+
+        event.preventDefault();
+
+        if (tag === "BUTTON") active.blur();
+
+        target.click();
+    });
+
+})();
