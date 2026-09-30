@@ -1,1955 +1,1050 @@
-/* ---------- BASIC SETUP ---------- */
+/* =====================================================
+   THE LAST SECOND — style.css
 
-* {
-    margin: 0;
-    padding: 0;
+   Look: a school at midnight. Chalkboard-green dark,
+   chalk-white type, a red marking pen for anything that
+   judges you. Typewriter body text, condensed
+   institutional headings.
+
+   Screen switching: script.js sets style.display to
+   "block" / "none" / "flex". This file hides every
+   screen by default and turns "block" into a centred
+   flex layout, so no changes to script.js are needed.
+   ===================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Special+Elite&family=Share+Tech+Mono&display=swap");
+
+/* ---------- TOKENS ---------- */
+
+:root {
+    --board: #0e1714;
+    --board-raised: #16231f;
+    --board-line: #2b3d36;
+    --chalk: #e9e6da;
+    --chalk-dim: #97a39a;
+    --pen: #d23a2e;
+    --pen-deep: #8f231b;
+    --tube: #e6dc9c;
+
+    --font-body: "Special Elite", "Courier New", monospace;
+    --font-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+    --font-digits: "Share Tech Mono", "Courier New", monospace;
+
+    --step--1: 0.9rem;
+    --step-0: 1.1rem;
+    --step-1: 1.4rem;
+    --step-2: clamp(1.8rem, 4vw, 2.4rem);
+    --step-3: clamp(2.6rem, 7vw, 4.4rem);
+    --step-4: clamp(3.4rem, 11vw, 7rem);
+}
+
+/* ---------- BASE ---------- */
+
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
-body {
-    background: #080808;
-    color: white;
-    font-family: Arial, sans-serif;
+html {
+    -webkit-text-size-adjust: 100%;
 }
 
-
-/* ---------- GAME SCREEN ---------- */
+body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background:
+        radial-gradient(ellipse at 50% 30%, #1b2b26 0%, var(--board) 60%, #070c0a 100%);
+    background-attachment: fixed;
+    color: var(--chalk);
+    font-family: var(--font-body);
+    font-size: var(--step-0);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
 
 #game {
+    position: relative;
     min-height: 100vh;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    background:
-        radial-gradient(
-            circle at center,
-            #1a1a1a 0%,
-            #080808 70%
-        );
+    min-height: 100dvh;
 }
 
+h1,
+h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+}
+
+h1 {
+    font-size: var(--step-3);
+}
+
+h2 {
+    font-size: var(--step-2);
+}
+
+p {
+    margin: 0;
+    max-width: 34em;
+}
+
+/* ---------- SCREENS ----------
+   Hidden by default. The start screen is visible until
+   script.js hides it. Anything script.js turns to
+   "block" becomes a centred flex column. */
+
+#game > section {
+    display: none;
+    position: relative;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 4.5rem 1.25rem 3rem;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    overflow: hidden;
+}
+
+#game > #start-screen:not([style*="display: none"]),
+#game > section[style*="display: block"],
+#game > section[style*="display: flex"] {
+    display: flex !important;
+}
+
+/* Flexible spacers centre the content but never clip it
+   when it is taller than the screen (mobile, leaderboard) */
+#game > section::before,
+#game > section::after {
+    content: "";
+    flex: 1 1 0;
+}
+
+/* ---------- BUTTONS ---------- */
+
+button {
+    font: inherit;
+    font-family: var(--font-body);
+    font-size: var(--step-0);
+    letter-spacing: 0.08em;
+    color: var(--chalk);
+    background: transparent;
+    border: 2px solid var(--chalk);
+    border-radius: 2px;
+    padding: 0.7em 1.8em;
+    margin-top: 1.5rem;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+button:hover {
+    background: var(--chalk);
+    color: var(--board);
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+button:focus-visible,
+input:focus-visible {
+    outline: 3px solid var(--tube);
+    outline-offset: 3px;
+}
+
+/* Submit buttons (script.js reveals them when ready) */
+#memory-submit,
+#word-submit,
+#observation-submit,
+#logic-submit,
+#pattern-submit {
+    background: var(--chalk);
+    color: var(--board);
+}
+
+#memory-submit:hover,
+#word-submit:hover,
+#observation-submit:hover,
+#logic-submit:hover,
+#pattern-submit:hover {
+    background: var(--tube);
+    border-color: var(--tube);
+}
+
+/* Screens with two buttons in a row */
+#start-btn {
+    background: var(--chalk);
+    color: var(--board);
+}
+
+#start-btn:hover {
+    background: var(--tube);
+    border-color: var(--tube);
+}
+
+#start-leaderboard-btn {
+    margin-top: 0.9rem;
+    border-color: var(--board-line);
+    color: var(--chalk-dim);
+}
+
+#start-leaderboard-btn:hover {
+    border-color: var(--chalk);
+    color: var(--board);
+}
+
+/* ---------- SMALL LABELS ---------- */
+
+.subtitle,
+.challenge-label,
+.result-label,
+.location-text,
+.hallway-time,
+.leaderboard-subtitle {
+    color: var(--chalk-dim);
+    font-size: var(--step--1);
+    letter-spacing: 0.06em;
+}
+
+.challenge-label,
+.result-label {
+    color: var(--pen);
+    margin-bottom: 0.4rem;
+}
 
 /* ---------- START SCREEN ---------- */
 
-#start-screen {
-    text-align: center;
+#start-screen .subtitle {
+    margin-bottom: 1rem;
 }
 
-
-/* ---------- SMALL TEXT ---------- */
-
-.subtitle {
-    color: #888;
-    font-size: 14px;
-
-    letter-spacing: 4px;
-    text-transform: uppercase;
-
-    margin-bottom: 25px;
-}
-
-
-/* ---------- GAME TITLE ---------- */
-
-h1 {
-    font-size: 70px;
-    letter-spacing: 8px;
-
-    margin-bottom: 20px;
-
-    text-shadow:
-        0 0 10px rgba(255, 255, 255, 0.15);
-}
-
-
-/* ---------- TAGLINE ---------- */
-
-.tagline {
-    color: #777;
-
-    font-size: 16px;
-
-    font-style: italic;
-
-    margin-bottom: 40px;
-}
-
-
-/* ---------- START BUTTON ---------- */
-
-#start-btn {
-    background: transparent;
-
-    color: white;
-
-    border: 1px solid #555;
-
-    padding: 14px 35px;
-
-    font-size: 16px;
-
-    letter-spacing: 2px;
-
-    cursor: pointer;
-
-    transition: all 0.3s ease;
-}
-
-
-/* Button hover */
-
-#start-btn:hover {
-
-    background: white;
-
-    color: black;
-
-    border-color: white;
-
-    box-shadow:
-        0 0 20px rgba(255, 255, 255, 0.2);
-}
-/* ---------- OPENING ANIMATION ---------- */
-
-#start-screen {
-    animation: screenFadeIn 3s ease forwards;
-}
-
-.subtitle {
-    animation: textFade 2s ease forwards;
-}
-
-h1 {
-    animation: titleAppear 3s ease forwards;
+#start-screen h1 {
+    font-size: var(--step-4);
+    font-weight: 900;
+    max-width: 8em;
+    text-wrap: balance;
 }
 
 .tagline {
-    animation: textFade 4s ease forwards;
+    margin-top: 1.2rem;
+    font-size: var(--step-1);
+    color: var(--chalk);
 }
 
-#start-btn {
-    opacity: 0;
-    animation: buttonAppear 2s ease 2.5s forwards;
-}
+/* ---------- CHARACTER SELECT ---------- */
 
-
-/* Screen slowly appears */
-
-@keyframes screenFadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-
-/* Normal text */
-
-@keyframes textFade {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-
-/* Title */
-
-@keyframes titleAppear {
-
-    0% {
-        opacity: 0;
-        transform: scale(0.95);
-        letter-spacing: 20px;
-    }
-
-    60% {
-        opacity: 1;
-    }
-
-    100% {
-        opacity: 1;
-        transform: scale(1);
-        letter-spacing: 8px;
-    }
-}
-
-
-/* Button appears after title */
-
-@keyframes buttonAppear {
-
-    from {
-        opacity: 0;
-        transform: translateY(15px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-#character-screen {
-    display: none;
-    text-align: center;
-}
-
-#character-screen h2 {
-    font-size: 40px;
-    letter-spacing: 5px;
-    margin-bottom: 40px;
+#character-screen h2,
+#name-screen h2 {
+    margin-top: 0.6rem;
+    text-wrap: balance;
 }
 
 .character-options {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
-    gap: 30px;
+    gap: 1.25rem;
+    margin-top: 2rem;
 }
 
 .character-btn {
-    width: 160px;
-    height: 160px;
-    background: #111;
-    border: 1px solid #444;
-    color: white;
-    font-size: 50px;
-    cursor: pointer;
-    transition: 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    width: 9.5rem;
+    margin: 0;
+    padding: 1.6rem 1rem 1.2rem;
+    font-size: 4rem;
+    line-height: 1;
+    border-color: var(--board-line);
+    background: var(--board-raised);
 }
 
 .character-btn span {
-    display: block;
-    font-size: 14px;
-    letter-spacing: 3px;
-    margin-top: 15px;
-    color: #888;
+    font-family: var(--font-body);
+    font-size: var(--step-0);
+    letter-spacing: 0.1em;
 }
 
 .character-btn:hover {
-    border-color: white;
-    background: #1b1b1b;
-    transform: scale(1.05);
+    border-color: var(--chalk);
 }
-/* ---------- NAME SCREEN ---------- */
 
-#name-screen {
-    display: none;
+/* ---------- NAME ---------- */
+
+#player-name,
+#word-input {
+    width: min(22rem, 100%);
+    margin-top: 2rem;
+    padding: 0.5em 0.2em;
+    font-family: var(--font-body);
+    font-size: var(--step-1);
     text-align: center;
-}
-
-#name-screen h2 {
-    font-size: 32px;
-    letter-spacing: 4px;
-    margin-bottom: 30px;
-}
-
-#player-name {
-    width: 300px;
-    padding: 14px;
-
-    background: #111;
-    color: white;
-
-    border: 1px solid #444;
-
-    font-size: 16px;
-
-    text-align: center;
-
-    outline: none;
-}
-
-#player-name:focus {
-    border-color: white;
-}
-
-#continue-btn {
-    margin-top: 25px;
-
+    color: var(--chalk);
     background: transparent;
-    color: white;
-
-    border: 1px solid #555;
-
-    padding: 13px 35px;
-
-    font-size: 15px;
-
-    letter-spacing: 2px;
-
-    cursor: pointer;
-
-    transition: 0.3s;
+    border: 0;
+    border-bottom: 2px solid var(--chalk);
+    border-radius: 0;
+    caret-color: var(--pen);
 }
 
-#continue-btn:hover {
-    background: white;
-    color: black;
+#player-name::placeholder,
+#word-input::placeholder {
+    color: var(--chalk-dim);
+    opacity: 0.7;
 }
 
-#name-error {
-    color: #b66;
-    margin-top: 15px;
+#name-error,
+#word-message {
+    min-height: 1.6em;
+    margin-top: 1rem;
+    color: var(--pen);
 }
-/* ---------- SCHOOL SCREEN ---------- */
+
+/* ---------- SCHOOL (rain) ---------- */
 
 #school-screen {
-    display: none;
-
-    position: relative;
-
-    width: 100%;
-    min-height: 100vh;
-
-    overflow: hidden;
-
-    background:
-        linear-gradient(
-            rgba(0, 0, 0, 0.55),
-            rgba(0, 0, 0, 0.85)
-        ),
-        radial-gradient(
-            circle at 50% 35%,
-            #252530,
-            #050507 75%
-        );
-
-    text-align: center;
+    background: linear-gradient(180deg, #08110f 0%, #101c1a 100%);
 }
-
-
-/* ---------- SCHOOL CONTENT ---------- */
-
-.school-content {
-    position: relative;
-
-    z-index: 2;
-
-    padding-top: 25vh;
-
-    animation: schoolAppear 3s ease forwards;
-}
-
-.location-text {
-    color: #777;
-
-    font-size: 14px;
-
-    letter-spacing: 5px;
-
-    margin-bottom: 30px;
-}
-
-.school-content h2 {
-    font-size: 60px;
-
-    letter-spacing: 10px;
-
-    margin-bottom: 30px;
-
-    text-shadow:
-        0 0 15px rgba(255, 255, 255, 0.15);
-}
-
-.school-description {
-    color: #888;
-
-    font-size: 16px;
-
-    margin: 10px;
-}
-
-
-/* ---------- ENTER BUTTON ---------- */
-
-#enter-school-btn {
-    margin-top: 35px;
-
-    padding: 14px 40px;
-
-    background: transparent;
-
-    color: white;
-
-    border: 1px solid #555;
-
-    font-size: 15px;
-
-    letter-spacing: 3px;
-
-    cursor: pointer;
-
-    transition: 0.3s;
-}
-
-#enter-school-btn:hover {
-    background: white;
-
-    color: black;
-
-    border-color: white;
-}
-
-
-/* ---------- RAIN ---------- */
 
 .rain {
     position: absolute;
-
-    top: -100px;
-    left: 0;
-
-    width: 100%;
-    height: 130%;
-
+    inset: 0;
     pointer-events: none;
-
-    opacity: 0.35;
-
     background-image:
-        repeating-linear-gradient(
-            105deg,
-            transparent 0px,
-            transparent 7px,
-            rgba(180, 190, 210, 0.5) 8px,
-            transparent 9px,
-            transparent 18px
-        );
-
-    animation: rainFall 0.7s linear infinite;
+        linear-gradient(103deg, transparent 47%, rgba(185, 208, 220, 0.22) 50%, transparent 53%),
+        linear-gradient(103deg, transparent 47%, rgba(185, 208, 220, 0.12) 50%, transparent 53%);
+    background-size: 46px 130px, 31px 90px;
+    animation: rain-fall 0.55s linear infinite;
 }
 
-
-/* ---------- ANIMATIONS ---------- */
-
-@keyframes rainFall {
-
-    from {
-        transform: translateY(-40px);
-    }
-
-    to {
-        transform: translateY(80px);
-    }
+@keyframes rain-fall {
+    from { background-position: 0 0, 0 0; }
+    to { background-position: -12px 130px, -8px 90px; }
 }
 
-
-@keyframes schoolAppear {
-
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.school-content,
+.hallway-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
-/* ---------- HALLWAY ---------- */
+
+.location-text {
+    font-family: var(--font-digits);
+    font-size: var(--step-1);
+    color: var(--tube);
+    margin-bottom: 0.8rem;
+}
+
+#school-screen h2 {
+    font-size: var(--step-3);
+    margin-bottom: 1.4rem;
+}
+
+.school-description + .school-description {
+    margin-top: 0.4rem;
+}
+
+.school-description {
+    color: var(--chalk);
+}
+
+/* ---------- HALLWAY (dying light) ---------- */
 
 #hallway-screen {
-    display: none;
-
-    position: relative;
-
-    min-height: 100vh;
-
-    overflow: hidden;
-
     background:
-        linear-gradient(
-            90deg,
-            #050505 0%,
-            #151515 45%,
-            #050505 100%
-        );
-
-    text-align: center;
+        radial-gradient(ellipse at 50% 0%, rgba(230, 220, 156, 0.16) 0%, transparent 55%),
+        #070c0a;
 }
-
-
-/* Dark hallway effect */
-
-#hallway-screen::before {
-    content: "";
-
-    position: absolute;
-
-    inset: 0;
-
-    background:
-        linear-gradient(
-            90deg,
-            rgba(0, 0, 0, 0.9),
-            transparent 45%,
-            rgba(0, 0, 0, 0.9)
-        );
-
-    pointer-events: none;
-}
-
-
-/* Flickering light */
 
 .flicker-light {
     position: absolute;
-
-    top: 12%;
+    top: 0;
     left: 50%;
-
-    width: 160px;
-    height: 25px;
-
+    width: min(26rem, 70%);
+    height: 12px;
     transform: translateX(-50%);
-
-    background: #aaa;
-
-    box-shadow:
-        0 0 30px #aaa,
-        0 0 70px rgba(255, 255, 255, 0.2);
-
-    animation: lightFlicker 4s infinite;
+    background: var(--tube);
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 0 40px 12px rgba(230, 220, 156, 0.45);
+    animation: tube-flicker 4.2s steps(1, end) infinite;
 }
 
-
-@keyframes lightFlicker {
-
-    0%, 18%, 22%, 63%, 67%, 100% {
-        opacity: 1;
-    }
-
-    20%, 65% {
-        opacity: 0.15;
-    }
+@keyframes tube-flicker {
+    0%, 8%, 12%, 40%, 44%, 100% { opacity: 1; }
+    9%, 11% { opacity: 0.15; }
+    41%, 43% { opacity: 0.35; }
+    70% { opacity: 0.8; }
 }
-
-
-/* Hallway content */
-
-.hallway-content {
-
-    position: relative;
-
-    z-index: 2;
-
-    padding-top: 32vh;
-
-    animation: hallwayAppear 2s ease;
-}
-
 
 .hallway-time {
-    color: #666;
-
-    letter-spacing: 4px;
-
-    font-size: 13px;
+    font-family: var(--font-digits);
+    color: var(--chalk-dim);
 }
 
+#hallway-screen h2 {
+    font-family: var(--font-body);   /* Big Shoulders draws "." as a square */
+    font-size: var(--step-3);
+    font-weight: 400;
+    margin: 0.4rem 0 0.6rem;
+}
 
 #door-message {
-    color: #999;
-
-    margin: 25px 0;
-
-    font-size: 17px;
+    color: var(--chalk);
 }
 
-
-#hallway-continue {
-    padding: 13px 35px;
-
-    background: transparent;
-
-    border: 1px solid #444;
-
-    color: white;
-
-    cursor: pointer;
-
-    letter-spacing: 2px;
-
-    transition: 0.3s;
-}
-
-
-#hallway-continue:hover {
-    background: white;
-
-    color: black;
-}
-
-
-@keyframes hallwayAppear {
-
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-/* ---------- PSYCHO SCREEN ---------- */
+/* ---------- PSYCHO DIALOGUE ---------- */
 
 #psycho-screen {
-    display: none;
-    position: relative;
-    min-height: 100vh;
-    overflow: hidden;
-    background: #020202;
-    color: white;
+    background: #060a09;
 }
 
+.projector-noise {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.035) 0 1px,
+        transparent 1px 3px
+    );
+    animation: projector-hum 0.14s steps(2, end) infinite;
+}
 
-/* Projector */
+@keyframes projector-hum {
+    0% { opacity: 0.55; }
+    100% { opacity: 1; }
+}
+
+.psycho-room {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: min(44rem, 100%);
+}
 
 .screen-glow {
     position: absolute;
-
-    top: 8%;
+    top: -3rem;
     left: 50%;
-
-    width: 500px;
-    height: 320px;
-
+    width: min(34rem, 120%);
+    aspect-ratio: 1;
     transform: translateX(-50%);
-
-    background: rgba(220, 220, 200, 0.12);
-
-    filter: blur(30px);
-
-    animation: projectorFlicker 4s infinite;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(200, 225, 215, 0.2) 0%, transparent 65%);
 }
-
-
-/* Psycho */
 
 .psycho-silhouette {
-    position: absolute;
-
-    top: 13%;
-    left: 50%;
-
-    transform: translateX(-50%);
-
-    width: 180px;
-    height: 250px;
-
-    opacity: 0;
-
-    animation: psychoAppear 4s ease forwards;
-
-    z-index: 2;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
 }
-
 
 .psycho-head {
-    width: 75px;
-    height: 75px;
-
-    margin: auto;
-
-    border-radius: 50%;
-
-    background: #050505;
-
-    box-shadow: 0 0 25px #000;
+    width: 5.2rem;
+    height: 5.8rem;
+    background: #000;
+    border-radius: 50% 50% 46% 46%;
+    box-shadow: 0 0 0 2px rgba(233, 230, 218, 0.08);
 }
-
 
 .psycho-body {
-    width: 130px;
-    height: 170px;
-
-    margin: -5px auto 0;
-
-    border-radius: 60px 60px 0 0;
-
-    background: #050505;
+    width: 12rem;
+    height: 6.5rem;
+    margin-top: -0.4rem;
+    background: #000;
+    border-radius: 6rem 6rem 0 0;
+    box-shadow: 0 0 0 2px rgba(233, 230, 218, 0.08);
 }
-
-
-/* Dialogue */
 
 .psycho-dialogue {
-    position: absolute;
-
-    left: 50%;
-    bottom: 8%;
-
-    transform: translateX(-50%);
-
-    width: min(700px, 85%);
-
-    text-align: center;
-
-    z-index: 5;
+    position: relative;
+    width: 100%;
+    padding: 1.4rem 1.6rem 1.6rem;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    background: rgba(14, 23, 20, 0.85);
+    border: 1px solid var(--board-line);
+    border-left: 4px solid var(--pen);
 }
-
 
 .psycho-name {
-    color: #999;
-
-    font-size: 13px;
-
-    letter-spacing: 5px;
-
-    margin-bottom: 20px;
+    margin-bottom: 0.6rem;
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--pen);
 }
-
 
 #psycho-text {
-    min-height: 70px;
-
-    color: white;
-
-    font-size: 22px;
-
-    line-height: 1.6;
-
-    text-shadow: 0 0 10px rgba(255,255,255,0.15);
+    min-height: 4.8em; /* room for two lines so the box never jumps while typing */
+    max-width: none;
+    font-size: var(--step-1);
+    line-height: 1.5;
 }
-
 
 #psycho-next {
-    margin-top: 20px;
-
-    padding: 13px 35px;
-
-    background: transparent;
-
-    border: 1px solid #666;
-
-    color: white;
-
-    font-size: 14px;
-
-    letter-spacing: 3px;
-
-    cursor: pointer;
-
+    align-self: flex-end;      /* CONTINUE sits on the right of the box */
+    margin-top: 0.6rem;
     opacity: 0;
-
-    transition: 0.3s;
+    pointer-events: none;
+    transition: opacity 0.25s;
 }
 
+/* "START CHALLENGE 01" (last opening line) sits in the centre */
+#psycho-next.centered {
+    align-self: center;
+}
 
 #psycho-next.visible {
     opacity: 1;
+    pointer-events: auto;
 }
 
+/* ---------- CHALLENGE LAYOUT (shared) ---------- */
 
-#psycho-next:hover {
-    background: white;
-    color: black;
-}
-
-
-/* ---------- PSYCHO ANIMATION ---------- */
-
-@keyframes psychoAppear {
-
-    0% {
-        opacity: 0;
-        transform: translateX(-50%) scale(0.9);
-    }
-
-    35% {
-        opacity: 0.15;
-    }
-
-    40% {
-        opacity: 0;
-    }
-
-    45% {
-        opacity: 0.3;
-    }
-
-    100% {
-        opacity: 1;
-        transform: translateX(-50%) scale(1);
-    }
-}
-
-
-@keyframes projectorFlicker {
-
-    0% {
-        opacity: 0;
-    }
-
-    10% {
-        opacity: 1;
-    }
-
-    12% {
-        opacity: 0.2;
-    }
-
-    15% {
-        opacity: 1;
-    }
-
-    100% {
-        opacity: 1;
-    }
-}
-/* ---------- PSYCHO VISIBILITY FIX ---------- */
-
-#psycho-screen {
-    display: none;
-    position: relative;
-    width: 100%;
-    min-height: 100vh;
-    background: #020202;
-    color: white;
-}
-
-#psycho-screen .psycho-dialogue {
-    display: block !important;
-    position: absolute;
-
-    left: 50%;
-    bottom: 10%;
-
-    transform: translateX(-50%);
-
-    width: 80%;
-
-    text-align: center;
-
-    z-index: 9999;
-
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-#psycho-screen .psycho-name {
-    display: block !important;
-
-    color: #aaa !important;
-
-    font-size: 14px;
-
-    letter-spacing: 5px;
-
-    margin-bottom: 20px;
-
-    opacity: 1 !important;
-}
-
-#psycho-screen #psycho-text {
-    display: block !important;
-
-    color: white !important;
-
-    font-size: 24px;
-
-    line-height: 1.6;
-
-    min-height: 70px;
-
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-#psycho-screen #psycho-next {
-    display: inline-block;
-
-    color: white !important;
-
-    border: 1px solid #666;
-
-    background: transparent;
-
-    opacity: 1;
-
-    margin-top: 20px;
-
-    padding: 12px 35px;
-
-    cursor: pointer;
-}
-/* =========================
-   MEMORY CHALLENGE
-========================= */
-
-#memory-screen {
-    display: none;
-    min-height: 100vh;
-    background:
-        radial-gradient(circle at center, #151515 0%, #050505 55%, #000 100%);
-    color: white;
-    position: relative;
-    overflow: hidden;
-}
-
-.memory-container {
-    min-height: 100vh;
+.memory-container,
+.word-container,
+.observation-container,
+.logic-container,
+.pattern-container,
+.result-container,
+.final-container {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    text-align: center;
-    padding: 30px;
+    width: min(38rem, 100%);
 }
 
-.challenge-label {
-    color: #777;
-    font-size: 14px;
-    letter-spacing: 5px;
-    margin-bottom: 15px;
+.memory-container h1,
+.word-container h1,
+.observation-container h1,
+.logic-container h1,
+.pattern-container h1 {
+    font-size: var(--step-3);
 }
 
-.memory-container h1 {
-    font-size: 42px;
-    letter-spacing: 8px;
-    margin: 0 0 15px;
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
+#memory-message,
+#word-clue,
+#observation-message,
+#logic-message,
+#pattern-message {
+    margin-top: 0.8rem;
+    color: var(--chalk);
 }
 
-#memory-message {
-    color: #aaa;
-    font-size: 18px;
-    margin-bottom: 35px;
+/* Timers — kept a fixed height so layout doesn't shift */
+#memory-timer,
+#word-timer,
+#observation-timer,
+#logic-timer,
+#pattern-timer {
+    min-height: 1.6em;
+    margin-top: 1.2rem;
+    font-family: var(--font-digits);
+    font-size: var(--step-0);
+    color: var(--tube);
+    letter-spacing: 0.05em;
 }
+
+/* ---------- CHALLENGE 1: MEMORY ---------- */
 
 #memory-sequence {
-    min-height: 90px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 18px;
-    font-size: 48px;
-    margin-bottom: 30px;
+    min-height: 1.3em;
+    margin-top: 1.4rem;
+    font-size: clamp(2rem, 8vw, 3.2rem);
+    line-height: 1.3;
+    word-spacing: 0.25em;
 }
 
-#memory-options {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    max-width: 600px;
+.selected-label {
+    margin-top: 1.4rem;
+    font-size: var(--step--1);
+    color: var(--chalk-dim);
 }
 
-.memory-option {
-    width: 65px;
-    height: 65px;
-    background: #111;
-    border: 1px solid #444;
-    color: white;
-    font-size: 30px;
-    cursor: pointer;
-    transition: 0.2s;
+#selected-sequence,
+#selected-pattern {
+    width: 100%;
+    min-height: 4.2rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 2rem;
+    line-height: 1.6;
+    word-spacing: 0.25em;
+    background: var(--board-raised);
+    border: 2px dashed var(--board-line);
 }
 
-.memory-option:hover {
-    border-color: white;
-    transform: scale(1.08);
+#memory-options,
+#pattern-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(4.2rem, 1fr));
+    gap: 0.6rem;
+    width: 100%;
+    margin-top: 1.2rem;
+}
+
+.memory-option,
+.pattern-option {
+    margin: 0;
+    padding: 0.5rem 0;
+    font-size: 2rem;
+    line-height: 1.3;
+    border-color: var(--board-line);
+    background: var(--board-raised);
+}
+
+.memory-option:hover,
+.pattern-option:hover {
+    background: var(--board-raised);
+    border-color: var(--chalk);
+    color: var(--chalk);
+}
+
+/* Selected = inverted, like chalk turned into a filled-in answer */
+.memory-option.selected,
+.observation-option.selected,
+.logic-option.selected {
+    background: var(--chalk);
+    border-color: var(--chalk);
+    color: var(--board);
 }
 
 .memory-option.selected {
-    border-color: #fff;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.35);
-    transform: scale(1.08);
+    filter: grayscale(1) contrast(1.1);
 }
 
-#memory-timer {
-    margin-top: 30px;
-    color: #888;
-    font-size: 16px;
-    letter-spacing: 2px;
+#memory-submit,
+#pattern-submit,
+#observation-submit,
+#logic-submit {
+    min-width: 12rem;
 }
 
-#memory-submit {
-    margin-top: 20px;
-    padding: 12px 30px;
-    background: transparent;
-    color: white;
-    border: 1px solid #555;
-    cursor: pointer;
-    letter-spacing: 3px;
-    transition: 0.2s;
-}
-
-#memory-submit:hover {
-    border-color: white;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-}
-.selected-label {
-    margin-top: 10px;
-    margin-bottom: 8px;
-    color: #666;
-    font-size: 12px;
-    letter-spacing: 3px;
-}
-
-#selected-sequence {
-    min-height: 50px;
-    min-width: 300px;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 12px;
-
-    padding: 10px 20px;
-    margin-bottom: 25px;
-
-    border-bottom: 1px solid #333;
-
-    font-size: 32px;
-}
-/* =========================
-   MEMORY RESULT
-========================= */
-
-#memory-result-screen {
-    display: none;
-    min-height: 100vh;
-    background:
-        radial-gradient(circle at center, #111 0%, #030303 60%, #000 100%);
-    color: white;
-}
-
-.result-container {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-}
-
-.result-label {
-    color: #666;
-    font-size: 13px;
-    letter-spacing: 5px;
-}
-
-.result-container h1 {
-    font-size: 48px;
-    letter-spacing: 10px;
-    margin: 10px 0 35px;
-}
-
-#result-message {
-    color: #aaa;
-    font-size: 20px;
-    margin-bottom: 15px;
-}
-
-#result-time {
-    color: white;
-    font-size: 16px;
-    letter-spacing: 3px;
-    margin-bottom: 40px;
-}
-
-#result-continue {
-    padding: 13px 35px;
-    background: transparent;
-    color: white;
-    border: 1px solid #555;
-    cursor: pointer;
-    letter-spacing: 3px;
-    transition: 0.2s;
-}
-
-#result-continue:hover {
-    border-color: white;
-    box-shadow: 0 0 18px rgba(255, 255, 255, 0.25);
-}
-/* =========================
-   WORD GUESS CHALLENGE
-========================= */
-
-#word-screen {
-    display: none;
-    min-height: 100vh;
-    background:
-        radial-gradient(circle at center, #151515 0%, #050505 55%, #000 100%);
-    color: white;
-    position: relative;
-    overflow: hidden;
-}
-
-.word-container {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 30px;
-}
-
-.word-container h1 {
-    font-size: 42px;
-    letter-spacing: 8px;
-    margin: 0 0 30px;
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
-}
+/* ---------- CHALLENGE 2: WORD ---------- */
 
 #word-clue {
-    max-width: 600px;
-    color: #aaa;
-    font-size: 19px;
-    line-height: 1.6;
-    margin-bottom: 35px;
+    font-size: var(--step-1);
+    text-wrap: balance;
 }
 
 #word-display {
-    font-size: 38px;
-    letter-spacing: 12px;
-    margin-bottom: 35px;
-    min-height: 50px;
+    margin-top: 1.4rem;
+    font-family: var(--font-digits);
+    font-size: clamp(2rem, 9vw, 3.4rem);
+    letter-spacing: 0.3em;
+    padding-left: 0.3em; /* balances the trailing letter-spacing */
 }
 
-#word-input {
-    width: 280px;
-    padding: 14px 18px;
-    background: transparent;
-    color: white;
-    border: 1px solid #555;
-    outline: none;
-    text-align: center;
-    font-size: 17px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-}
-
-#word-input:focus {
-    border-color: white;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
-}
-
-#word-timer {
-    margin-top: 25px;
-    color: #888;
-    font-size: 16px;
-    letter-spacing: 2px;
-}
-
-#word-message {
-    min-height: 25px;
-    margin-top: 15px;
-    color: #aaa;
-}
-
-#word-submit {
-    margin-top: 20px;
-    padding: 12px 30px;
-    background: transparent;
-    color: white;
-    border: 1px solid #555;
-    cursor: pointer;
-    letter-spacing: 3px;
-    transition: 0.2s;
-}
-
-#word-submit:hover {
-    border-color: white;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-}
-/* =========================
-   WORD RESULT
-========================= */
-
-#word-result-screen {
-    display: none;
-    min-height: 100vh;
-    background:
-        radial-gradient(circle at center, #111 0%, #030303 60%, #000 100%);
-    color: white;
-}
-/* =========================
-   OBSERVATION CHALLENGE
-========================= */
-
-#observation-screen {
-    display: none;
-    min-height: 100vh;
-    background:
-        radial-gradient(circle at center, #151515 0%, #050505 55%, #000 100%);
-    color: white;
-    position: relative;
-    overflow: hidden;
-}
-
-.observation-container {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 30px;
-}
-
-.observation-container h1 {
-    font-size: 42px;
-    letter-spacing: 8px;
-    margin: 0 0 15px;
-}
-
-#observation-message {
-    color: #888;
-    font-size: 17px;
-    margin-bottom: 30px;
-}
+/* ---------- CHALLENGE 3: OBSERVATION ---------- */
 
 #observation-scene {
-    width: 600px;
-    height: 330px;
-    max-width: 90vw;
-
     position: relative;
-
-    border: 1px solid #333;
-
+    width: 100%;
+    height: 19rem;
+    margin-top: 1.4rem;
     background:
-        linear-gradient(
-            to bottom,
-            #0b0b0b 0%,
-            #090909 70%,
-            #050505 70%,
-            #050505 100%
-        );
+        linear-gradient(180deg, #121e1a 0%, #121e1a 68%, #0a1210 68%, #0a1210 100%);
+    border: 2px solid var(--board-line);
+}
 
-    margin-bottom: 25px;
-
-    overflow: hidden;
-
-    box-shadow:
-        inset 0 0 50px rgba(0, 0, 0, 0.9);
-        /* Objects inside the observation room */
+#observation-scene:empty {
+    border-style: dashed;
+    background: transparent;
+}
 
 .observation-object {
     position: absolute;
-
-    font-size: 42px;
-
-    user-select: none;
-
-    filter:
-        grayscale(30%)
-        drop-shadow(0 0 5px rgba(255, 255, 255, 0.15));
-}
-#observation-scene::before {
-    content: "";
-
-    position: absolute;
-
-    left: 0;
-    right: 0;
-    bottom: 0;
-
-    height: 30%;
-
-    border-top: 1px solid #151515;
-
-    background:
-        repeating-linear-gradient(
-            90deg,
-            #070707 0px,
-            #070707 50px,
-            #0b0b0b 51px,
-            #0b0b0b 100px
-        );
-}
+    font-size: clamp(2.4rem, 9vw, 3.4rem);
+    line-height: 1;
 }
 
 #observation-question {
-    color: #aaa;
-    font-size: 19px;
-    margin: 20px 0;
+    margin-top: 1.4rem;
+    font-size: var(--step-1);
+    text-wrap: balance;
 }
 
-#observation-options {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    max-width: 600px;
-}
-
-.observation-option {
-    min-width: 100px;
-    padding: 13px 20px;
-
-    background: #111;
-    color: white;
-
-    border: 1px solid #444;
-    cursor: pointer;
-
-    font-size: 18px;
-
-    transition: 0.2s;
-}
-
-.observation-option:hover {
-    border-color: white;
-    transform: scale(1.05);
-}
-
-.observation-option.selected {
-    border-color: white;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-}
-
-#observation-timer {
-    margin-top: 25px;
-    color: #888;
-    font-size: 16px;
-    letter-spacing: 2px;
-}
-
-#observation-submit {
-    margin-top: 15px;
-    padding: 12px 30px;
-
-    background: transparent;
-    color: white;
-
-    border: 1px solid #555;
-    cursor: pointer;
-
-    letter-spacing: 3px;
-    transition: 0.2s;
-}
-
-#observation-submit:hover {
-    border-color: white;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-}
-/* =========================
-   OBSERVATION RESULT
-========================= */
-
-#observation-result-screen {
-    display: none;
-    min-height: 100vh;
-    background:
-        radial-gradient(circle at center, #111 0%, #030303 60%, #000 100%);
-    color: white;
-}
-/* =========================
-   LOGIC CHALLENGE
-========================= */
-
-#logic-screen {
-    display: none;
-    min-height: 100vh;
-    background:
-        radial-gradient(circle at center, #151515 0%, #050505 55%, #000 100%);
-    color: white;
-    position: relative;
-    overflow: hidden;
-}
-
-.logic-container {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 30px;
-}
-
-.logic-container h1 {
-    font-size: 42px;
-    letter-spacing: 8px;
-    margin: 0 0 15px;
-}
-
-#logic-message {
-    color: #888;
-    font-size: 17px;
-    margin-bottom: 35px;
-}
-
-#logic-question {
-    font-size: 34px;
-    letter-spacing: 5px;
-    min-height: 60px;
-    margin-bottom: 30px;
-}
-
+#observation-options,
 #logic-options {
     display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 15px;
-    max-width: 650px;
-}
-
-.logic-option {
-    min-width: 100px;
-    padding: 14px 24px;
-
-    background: #111;
-    color: white;
-
-    border: 1px solid #444;
-    cursor: pointer;
-
-    font-size: 20px;
-
-    transition: 0.2s;
-}
-
-.logic-option:hover {
-    border-color: white;
-    transform: scale(1.05);
-}
-
-.logic-option.selected {
-    border-color: white;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-}
-
-#logic-timer {
-    margin-top: 30px;
-    color: #888;
-    font-size: 16px;
-    letter-spacing: 2px;
-}
-
-#logic-submit {
-    margin-top: 15px;
-    padding: 12px 30px;
-
-    background: transparent;
-    color: white;
-
-    border: 1px solid #555;
-    cursor: pointer;
-
-    letter-spacing: 3px;
-    transition: 0.2s;
-}
-
-#logic-submit:hover {
-    border-color: white;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-}
-/* =========================
-   CHALLENGE 4 RESULT
-========================= */
-
-#logic-result-screen {
-    display: none;
-    min-height: 100vh;
-
-    background:
-        radial-gradient(
-            circle at center,
-            #111 0%,
-            #030303 60%,
-            #000 100%
-        );
-
-    color: white;
-}
-/* =========================
-   PATTERN CHALLENGE
-========================= */
-
-#pattern-screen {
-    display: none;
-    min-height: 100vh;
-
-    background:
-        radial-gradient(
-            circle at center,
-            #151515 0%,
-            #050505 55%,
-            #000 100%
-        );
-
-    color: white;
-
-    position: relative;
-    overflow: hidden;
-}
-
-.pattern-container {
-    min-height: 100vh;
-
-    display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-
-    text-align: center;
-
-    padding: 30px;
+    gap: 0.6rem;
+    width: 100%;
+    margin-top: 1rem;
 }
 
-.pattern-container h1 {
-    font-size: 42px;
-    letter-spacing: 8px;
-    margin: 0 0 15px;
+.observation-option,
+.logic-option {
+    width: 100%;
+    margin: 0;
+    padding: 0.8em 1em;
+    text-align: left;
+    border-color: var(--board-line);
+    background: var(--board-raised);
 }
 
-#pattern-message {
-    color: #888;
-    font-size: 17px;
-    margin-bottom: 30px;
+.observation-option:hover,
+.logic-option:hover {
+    background: var(--board-raised);
+    border-color: var(--chalk);
+    color: var(--chalk);
 }
+
+/* ---------- CHALLENGE 4: LOGIC ---------- */
+
+#logic-question {
+    width: 100%;
+    margin-top: 1.4rem;
+    padding: 1.2rem 1.4rem;
+    font-size: var(--step-1);
+    line-height: 1.5;
+    text-align: left;
+    background: var(--board-raised);
+    border-left: 4px solid var(--chalk);
+}
+
+/* ---------- CHALLENGE 5: PATTERN ---------- */
 
 #pattern-display {
-    min-width: 350px;
-    min-height: 80px;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    padding: 20px;
-
-    background: #080808;
-    border: 1px solid #333;
-
-    font-size: 42px;
-    letter-spacing: 12px;
-
-    margin-bottom: 30px;
+    min-height: 1.3em;
+    margin-top: 1.4rem;
+    font-size: clamp(2rem, 8vw, 3.2rem);
+    line-height: 1.3;
+    word-spacing: 0.25em;
 }
 
-#pattern-options {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
+/* ---------- RESULT SCREENS ----------
+   The "COMPLETE" heading is stamped in red pen. */
 
-    gap: 12px;
-
-    max-width: 600px;
+.result-container h1 {
+    margin: 0.8rem 0 1.8rem;
+    padding: 0.15em 0.5em 0.05em;
+    font-size: var(--step-3);
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: var(--pen);
+    border: 4px solid var(--pen);
+    border-radius: 4px;
+    transform: rotate(-3deg);
+    animation: stamp-in 0.28s cubic-bezier(0.2, 1.4, 0.5, 1) both;
 }
 
-.pattern-option {
-    min-width: 70px;
-
-    padding: 14px 20px;
-
-    background: #111;
-    color: white;
-
-    border: 1px solid #444;
-
-    cursor: pointer;
-
-    font-size: 26px;
-
-    transition: 0.2s;
+@keyframes stamp-in {
+    from {
+        opacity: 0;
+        transform: rotate(-3deg) scale(1.6);
+    }
+    to {
+        opacity: 1;
+        transform: rotate(-3deg) scale(1);
+    }
 }
 
-.pattern-option:hover {
-    border-color: white;
-    transform: scale(1.05);
+#result-message,
+#word-result-message,
+#observation-result-message,
+#logic-result-message,
+#pattern-result-message {
+    font-size: var(--step-1);
+    text-wrap: balance;
 }
 
-.pattern-option.selected {
-    border-color: white;
-
-    box-shadow:
-        0 0 15px rgba(255, 255, 255, 0.3);
+#result-time,
+#word-result-time,
+#observation-result-time,
+#logic-result-time,
+#pattern-result-time {
+    margin-top: 0.8rem;
+    font-family: var(--font-digits);
+    font-size: var(--step-2);
+    color: var(--tube);
 }
 
-#selected-pattern {
-    min-height: 45px;
-
-    margin-top: 25px;
-
-    font-size: 30px;
-    letter-spacing: 10px;
-}
-
-#pattern-timer {
-    margin-top: 25px;
-
-    color: #888;
-
-    font-size: 16px;
-    letter-spacing: 2px;
-}
-
-#pattern-submit {
-    margin-top: 15px;
-
-    padding: 12px 30px;
-
-    background: transparent;
-    color: white;
-
-    border: 1px solid #555;
-
-    cursor: pointer;
-
-    letter-spacing: 3px;
-
-    transition: 0.2s;
-}
-
-#pattern-submit:hover {
-    border-color: white;
-
-    box-shadow:
-        0 0 15px rgba(255, 255, 255, 0.2);
-}
-/* =========================
-   CHALLENGE 5 RESULT
-========================= */
-
-#pattern-result-screen {
-    display: none;
-    min-height: 100vh;
-
-    background:
-        radial-gradient(
-            circle at center,
-            #111 0%,
-            #030303 60%,
-            #000 100%
-        );
-
-    color: white;
-}
-/* =========================
-   FINAL CHALLENGE
-========================= */
+/* ---------- FINAL CHALLENGE ---------- */
 
 #final-screen {
-    display: none;
-    min-height: 100vh;
-
     background:
-        radial-gradient(
-            circle at center,
-            #160000 0%,
-            #050000 55%,
-            #000 100%
-        );
-
-    color: white;
-
-    position: relative;
-    overflow: hidden;
-}
-
-.final-container {
-    min-height: 100vh;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-
-    text-align: center;
-
-    padding: 30px;
+        radial-gradient(ellipse at 50% 45%, rgba(210, 58, 46, 0.14) 0%, transparent 60%),
+        #070c0a;
 }
 
 .final-container h1 {
-    font-size: 48px;
-    letter-spacing: 10px;
-
-    margin: 0 0 20px;
+    font-size: var(--step-3);
+    font-weight: 900;
+    margin-top: 0.4rem;
 }
 
 #final-message {
-    color: #999;
-    font-size: 18px;
-
-    margin-bottom: 35px;
+    margin-top: 1rem;
+    text-wrap: balance;
 }
 
 #final-target {
-    font-size: 22px;
-    letter-spacing: 4px;
-
-    margin-bottom: 25px;
+    margin-top: 1.6rem;
+    font-family: var(--font-digits);
+    font-size: var(--step-1);
+    color: var(--chalk-dim);
+    letter-spacing: 0.05em;
 }
 
 #final-timer {
-    font-size: 72px;
-    font-weight: bold;
-    letter-spacing: 5px;
-
-    margin: 20px 0 40px;
+    margin: 0.4rem 0 0.6rem;
+    font-family: var(--font-digits);
+    font-size: var(--step-4);
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    color: var(--chalk);
+    text-shadow: 0 0 30px rgba(233, 230, 218, 0.25);
 }
 
 #final-start,
 #final-stop {
-    padding: 15px 45px;
-
-    background: transparent;
-    color: white;
-
-    border: 1px solid #555;
-
-    cursor: pointer;
-
-    font-size: 16px;
-    letter-spacing: 4px;
-
-    transition: 0.2s;
+    min-width: 14rem;
+    padding: 0.9em 2em;
+    font-size: var(--step-1);
 }
 
-#final-start:hover,
-#final-stop:hover {
-    border-color: white;
+#final-start {
+    background: var(--chalk);
+    color: var(--board);
+}
 
-    box-shadow:
-        0 0 20px rgba(255, 255, 255, 0.25);
+#final-start:hover {
+    background: var(--tube);
+    border-color: var(--tube);
 }
 
 #final-stop {
-    display: none;
+    background: var(--pen);
+    border-color: var(--pen);
+    color: var(--chalk);
 }
-/* =========================
-   LEADERBOARD
-========================= */
+
+#final-stop:hover {
+    background: var(--pen-deep);
+    border-color: var(--pen-deep);
+    color: var(--chalk);
+}
+
+/* ---------- LEADERBOARD ---------- */
 
 #leaderboard-screen {
-    display: none;
-    min-height: 100vh;
-
-    background:
-        radial-gradient(
-            circle at center,
-            #111 0%,
-            #030303 60%,
-            #000 100%
-        );
-
-    color: white;
+    padding-top: 3.5rem;
 }
 
 .leaderboard-container {
-    min-height: 100vh;
-
     display: flex;
     flex-direction: column;
     align-items: center;
-
-    padding: 60px 30px;
+    width: min(46rem, 100%);
 }
 
 .leaderboard-container h1 {
-    font-size: 42px;
-    letter-spacing: 8px;
-    margin: 10px 0 15px;
+    font-size: var(--step-3);
+    text-wrap: balance;
 }
 
 .leaderboard-subtitle {
-    color: #777;
-    font-size: 16px;
-    margin-bottom: 40px;
-    text-align: center;
+    margin: 0.8rem 0 2rem;
 }
 
 #leaderboard-list {
     width: 100%;
-    max-width: 900px;
-
-    border: 1px solid #333;
-    background: #080808;
+    text-align: left;
+    background: var(--board-raised);
+    border: 1px solid var(--board-line);
 }
 
 .leaderboard-header,
 .leaderboard-entry {
     display: grid;
-
-    grid-template-columns:
-        80px
-        1.5fr
-        140px
-        160px
-        140px;
-
+    grid-template-columns: 3.5rem minmax(0, 1fr) 5.5rem 6rem 6rem;
     align-items: center;
-    text-align: center;
-
-    padding: 18px 15px;
+    gap: 0.6rem;
+    padding: 0.7rem 1rem;
 }
 
 .leaderboard-header {
-    color: #777;
-
-    border-bottom: 1px solid #333;
-
-    font-size: 13px;
-    letter-spacing: 2px;
+    font-size: var(--step--1);
+    color: var(--chalk-dim);
+    background: var(--board);
+    border-bottom: 2px solid var(--chalk);
 }
 
 .leaderboard-entry {
-    border-bottom: 1px solid #222;
-
-    font-size: 16px;
-
-    transition: 0.2s;
+    border-bottom: 1px solid var(--board-line);
 }
 
 .leaderboard-entry:last-child {
-    border-bottom: none;
+    border-bottom: 0;
 }
 
-.leaderboard-entry:hover {
-    background: #111;
+.leaderboard-entry span:nth-child(2) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.leaderboard-rank {
-    font-size: 20px;
+.leaderboard-rank,
+.leaderboard-time,
+.leaderboard-accuracy {
+    font-family: var(--font-digits);
 }
 
 .leaderboard-time {
-    letter-spacing: 1px;
+    color: var(--chalk);
 }
 
 .leaderboard-accuracy {
-    color: #aaa;
+    color: var(--tube);
+}
+
+/* Top three get a marker in the margin, not a medal emoji */
+.leaderboard-entry:nth-child(1) {
+    background: rgba(230, 220, 156, 0.09);
+    box-shadow: inset 4px 0 0 var(--tube);
+}
+
+.leaderboard-entry:nth-child(2) {
+    box-shadow: inset 4px 0 0 var(--chalk);
+}
+
+.leaderboard-entry:nth-child(3) {
+    box-shadow: inset 4px 0 0 var(--chalk-dim);
 }
 
 #leaderboard-back {
-    margin-top: 35px;
-
-    padding: 12px 35px;
-
-    background: transparent;
-    color: white;
-
-    border: 1px solid #555;
-
-    cursor: pointer;
-
-    letter-spacing: 3px;
-
-    transition: 0.2s;
+    margin-top: 2rem;
 }
 
-#leaderboard-back:hover {
-    border-color: white;
-
-    box-shadow:
-        0 0 15px rgba(255, 255, 255, 0.2);
-}
-/* RESTART GAME */
+/* ---------- RESTART ---------- */
 
 #restart-game-btn {
     display: none;
     position: fixed;
-    bottom: 25px;
-    left: 25px;
-
-    padding: 10px 22px;
-
-    background: transparent;
-    color: #888;
-
-    border: 1px solid #444;
-
-    cursor: pointer;
-
-    font-size: 13px;
-    letter-spacing: 2px;
-
-    z-index: 1000;
-
-    transition: 0.2s;
+    top: 0.9rem;
+    right: 0.9rem;
+    z-index: 20;
+    margin: 0;
+    padding: 0.4em 1em;
+    font-size: var(--step--1);
+    color: var(--chalk-dim);
+    border-color: var(--board-line);
+    background: rgba(14, 23, 20, 0.85);
 }
 
 #restart-game-btn:hover {
-    color: white;
-    border-color: white;
+    background: var(--pen);
+    border-color: var(--pen);
+    color: var(--chalk);
 }
-
-
-/* RESTART CONFIRMATION */
 
 #restart-confirm {
     display: none;
-
     position: fixed;
-
     inset: 0;
-
-    background: rgba(0, 0, 0, 0.85);
-
+    z-index: 100;
     align-items: center;
     justify-content: center;
-
-    z-index: 2000;
+    padding: 1.25rem;
+    background: rgba(4, 8, 6, 0.86);
 }
 
 .restart-box {
-    width: 380px;
-
-    padding: 40px;
-
+    width: min(26rem, 100%);
+    padding: 1.8rem 1.6rem;
     text-align: center;
-
-    background: #080808;
-
-    border: 1px solid #444;
-
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+    background: var(--board-raised);
+    border: 2px solid var(--pen);
 }
 
 .restart-box h2 {
-    margin-bottom: 15px;
-
-    font-size: 24px;
-
-    letter-spacing: 4px;
+    font-size: var(--step-2);
+    color: var(--pen);
 }
 
 .restart-box p {
-    color: #777;
-
-    margin-bottom: 30px;
+    margin: 0.8rem auto 0;
 }
 
 .restart-buttons {
     display: flex;
-
+    flex-wrap: wrap;
     justify-content: center;
-
-    gap: 15px;
+    gap: 0.8rem;
+    margin-top: 1.4rem;
 }
 
 .restart-buttons button {
-    padding: 12px 25px;
-
-    background: transparent;
-
-    color: white;
-
-    border: 1px solid #555;
-
-    cursor: pointer;
-
-    letter-spacing: 2px;
-
-    transition: 0.2s;
+    margin: 0;
+    padding: 0.6em 1.3em;
 }
 
-.restart-buttons button:hover {
-    border-color: white;
+#restart-confirm-btn {
+    background: var(--pen);
+    border-color: var(--pen);
+}
 
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+#restart-confirm-btn:hover {
+    background: var(--pen-deep);
+    border-color: var(--pen-deep);
+    color: var(--chalk);
+}
+
+/* ---------- SMALL SCREENS ---------- */
+
+@media (max-width: 34rem) {
+    #game > section {
+        padding: 4rem 1rem 2rem;
+    }
+
+    #observation-scene {
+        height: 16rem;
+    }
+
+    /* Drop the BOY / GIRL column so time and accuracy stay readable */
+    .leaderboard-header,
+    .leaderboard-entry {
+        grid-template-columns: 2.6rem minmax(0, 1fr) 4.6rem 4.6rem;
+        padding-inline: 0.7rem;
+    }
+
+    .leaderboard-header span:nth-child(3),
+    .leaderboard-entry span:nth-child(3) {
+        display: none;
+    }
+
+    #psycho-text {
+        font-size: var(--step-0);
+    }
+}
+
+/* ---------- REDUCED MOTION ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+    .rain,
+    .flicker-light,
+    .projector-noise,
+    .result-container h1 {
+        animation: none;
+    }
+
+    button {
+        transition: none;
+    }
 }

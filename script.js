@@ -922,6 +922,24 @@ function startPsychoDialogue() {
     showDialogue(dialogues[dialogueIndex]);
 }
 let dialogueTyping = null;
+// Psycho button: the last line of the opening dialogue starts Challenge 01
+function updatePsychoButton() {
+
+    const isIntro =
+        psychoScreen.dataset.ending !== "true" &&
+        psychoScreen.dataset.twist !== "true";
+
+    const isLastLine = dialogueIndex === dialogues.length - 1;
+
+    if (isIntro && isLastLine) {
+        psychoNext.textContent = "START CHALLENGE 01";
+        psychoNext.classList.add("centered");
+    } else {
+        psychoNext.textContent = "CONTINUE";
+        psychoNext.classList.remove("centered");
+    }
+}
+
 function showDialogue(dialogue) {
 
     if (dialogueTyping !== null) {
@@ -932,6 +950,8 @@ function showDialogue(dialogue) {
     psychoText.textContent = "";
 
     psychoNext.classList.remove("visible");
+
+    updatePsychoButton();
 
     let index = 0;
 
@@ -1019,7 +1039,7 @@ function startMemoryChallenge() {
     let countdown = 5;
 
     memoryTimer.textContent =
-        "Memorize: " + countdown;
+        "MEMORIZE: " + countdown;
 
     const countdownTimer = setInterval(function () {
 
@@ -1027,7 +1047,7 @@ function startMemoryChallenge() {
         if (countdown > 0) {
 
     memoryTimer.textContent =
-        "Memorize: " + countdown;
+        "MEMORIZE: " + countdown;
 
 } else {
 
@@ -1039,7 +1059,7 @@ function startMemoryChallenge() {
         "Recreate the sequence.";
 
     memoryTimer.textContent =
-        "Your turn";
+        "YOUR TURN";
 
     // Timer starts only when the player can answer
     memoryStartTime = performance.now();
@@ -1384,7 +1404,7 @@ function startObservationChallenge() {
                 "What did you see?";
 
             observationTimer.textContent =
-                "Your turn";
+                "YOUR TURN";
 
             showObservationQuestion();
 
@@ -1724,7 +1744,7 @@ function startPatternChallenge() {
                     "Recreate the pattern.";
 
                 patternTimer.textContent =
-                    "Your turn";
+                    "YOUR TURN";
 
                 showPatternOptions();
             }
