@@ -2029,6 +2029,7 @@ function resetPlayerScore() {
 // =========================
 
 function startLoseEnding() {
+    finalScreen.style.display = "none";
     psychoScreen.dataset.ending = "true";
 
     psychoScreen.style.display = "block";
@@ -2067,6 +2068,7 @@ function startLoseEnding() {
 
 
 function startWinEnding() {
+    finalScreen.style.display = "none";
     psychoScreen.dataset.ending = "true";
 
     psychoScreen.style.display = "block";
@@ -2110,7 +2112,7 @@ async function saveLeaderboardScore() {
         .from("leaderboard")
         .insert({
             name: playerName,
-            gender: playerGender,
+            gender: playerGender.toUpperCase(),
             total_time: Number(totalChallengeTime.toFixed(2)),
             accuracy: Number(finalAccuracy.toFixed(2))
         })
@@ -2168,6 +2170,8 @@ restartConfirmBtn.addEventListener(
 
         // Reset challenge scores
         resetPlayerScore();
+        psychoScreen.dataset.twist = "false";
+        psychoScreen.dataset.ending = "false";
 
         // Hide every game screen
         startScreen.style.display = "none";
