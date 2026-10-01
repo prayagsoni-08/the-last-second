@@ -5,6 +5,22 @@ const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_PUBLISHABLE_KEY
 );
+
+// How long the player gets to memorize before Challenges 1, 3 and 5
+// (Memory, Observation, Pattern) hide the content and ask them to recall it.
+const MEMORIZE_SECONDS = 10;
+
+// Difficulty tiers picked from as the player advances through the
+// content-based challenges: Word (easiest) -> Observation -> Logic (hardest).
+function pickQuestionByDifficulty(pool, difficulty) {
+    const matches = pool.filter(function (q) {
+        return q.difficulty === difficulty;
+    });
+
+    const source = matches.length > 0 ? matches : pool;
+
+    return source[Math.floor(Math.random() * source.length)];
+}
 // ---------- GET HTML ELEMENTS ----------
 
 const startButton = document.getElementById("start-btn");
@@ -43,6 +59,14 @@ const memorySubmit = document.getElementById("memory-submit");
 const memoryResultScreen =
     document.getElementById("memory-result-screen");
 
+// UNDO button for Challenge 1 (created here since it isn't in the HTML)
+const memoryUndoBtn = document.createElement("button");
+memoryUndoBtn.id = "memory-undo-btn";
+memoryUndoBtn.className = "undo-btn";
+memoryUndoBtn.textContent = "UNDO";
+memoryUndoBtn.style.display = "none";
+memorySubmit.insertAdjacentElement("afterend", memoryUndoBtn);
+
 const resultMessage =
     document.getElementById("result-message");
 
@@ -56,11 +80,29 @@ let memoryQuestion = [];
 let playerAnswer = [];
 let memoryStartTime = 0;
 let memoryTimerInterval = null;
+// 6-symbol sequences drawn only from a 12-symbol pool:
+// 🔑 🕯️ 📕 ⏰ 🌹 🎲 🧸 🔔 📷 🍎 🌙 🎸
 const memoryQuestions = [
-    ["🔑", "🕯️", "📕", "⏰", "🌹"],
-    ["🎲", "🧸", "🔔", "📷", "🍎"],
-    ["🌙", "🔑", "🎸", "📕", "🕯️"],
-    ["⏰", "🌹", "🎲", "🔔", "🧸"]
+    ["🔑", "🕯️", "📕", "⏰", "🌹", "🎲"],
+    ["🧸", "🔔", "📷", "🍎", "🌙", "🎸"],
+    ["🌹", "🎲", "🧸", "🔔", "📷", "🍎"],
+    ["🎸", "🔑", "🕯️", "📕", "⏰", "🌹"],
+    ["📷", "🍎", "🌙", "🎸", "🔑", "🕯️"],
+    ["📕", "⏰", "🌹", "🎲", "🧸", "🔔"],
+    ["🌙", "🎸", "🔑", "🕯️", "📕", "⏰"],
+    ["🎲", "🧸", "🔔", "📷", "🍎", "🌙"],
+    ["🕯️", "📕", "⏰", "🌹", "🎲", "🧸"],
+    ["🔔", "📷", "🍎", "🌙", "🎸", "🔑"],
+    ["⏰", "🌹", "🎲", "🧸", "🔔", "📷"],
+    ["🍎", "🌙", "🎸", "🔑", "🕯️", "📕"],
+    ["🔑", "📷", "🎲", "🕯️", "🍎", "⏰"],
+    ["🧸", "🌙", "🔔", "🎸", "📕", "🌹"],
+    ["📕", "🔑", "🌹", "🍎", "🎲", "🌙"],
+    ["🎸", "🧸", "⏰", "🔔", "🕯️", "📷"],
+    ["🌹", "📷", "🔑", "🌙", "🧸", "📕"],
+    ["🍎", "🎲", "🕯️", "🎸", "🔔", "⏰"],
+    ["📷", "🌹", "🧸", "🔑", "📕", "🎸"],
+    ["🌙", "⏰", "🍎", "🔔", "🎲", "🕯️"]
 ];
 
 // WORD CHALLENGE
@@ -88,84 +130,173 @@ let wordStartTime = 0;
 let wordCountdown = null;
 const wordQuestions = [
     {
-        word: "KEY",
-        clue: "I can unlock a door, but I am not the door."
+        word: "HOLE",
+        clue: "The more of me you take away, the bigger I become.",
+        difficulty: "easy"
     },
     {
-        word: "CLOCK",
-        clue: "I have hands but cannot clap."
+        word: "TOMORROW",
+        clue: "I am always a day away, yet I never arrive.",
+        accept: ["FUTURE"],
+        difficulty: "medium"
     },
     {
-        word: "RAIN",
-        clue: "I fall from clouds and make the ground wet."
+        word: "MAP",
+        clue: "I have rivers without water, cities without people and roads without travellers.",
+        accept: ["ATLAS"],
+        difficulty: "medium"
     },
     {
-        word: "CANDLE",
-        clue: "I give light while slowly becoming smaller."
+        word: "BREATH",
+        clue: "I am lighter than a feather, yet the strongest person cannot hold me for long.",
+        accept: ["BREATHE"],
+        difficulty: "medium"
     },
     {
-        word: "DOOR",
-        clue: "You open me to enter a room."
+        word: "KEYBOARD",
+        clue: "I have many keys, yet I open no door. I have a space, yet no room.",
+        difficulty: "easy"
     },
     {
-        word: "LOCK",
-        clue: "I keep something closed until the right key arrives."
-    }    ,
-    {
-        word: "SHADOW",
-        clue: "I follow you when there is light, but disappear in darkness."
+        word: "NEEDLE",
+        clue: "I have one eye, yet I cannot see. I pull a thread behind me.",
+        difficulty: "easy"
     },
     {
-        word: "MIRROR",
-        clue: "I show your reflection but cannot keep it."
+        word: "SPONGE",
+        clue: "I am full of holes, yet I still hold water.",
+        difficulty: "easy"
     },
     {
-        word: "ECHO",
-        clue: "I repeat your sound after you make it."
+        word: "TOWEL",
+        clue: "The more I dry, the wetter I get.",
+        difficulty: "easy"
     },
     {
-        word: "DREAM",
-        clue: "I can create a world while your eyes are closed."
+        word: "COFFIN",
+        clue: "The one who makes me does not need me. The one who buys me does not use me. The one who uses me never knows.",
+        accept: ["CASKET"],
+        difficulty: "hard"
     },
     {
-        word: "MEMORY",
-        clue: "I allow you to remember something that happened before."
+        word: "FIRE",
+        clue: "I am not alive, yet I grow. I have no lungs, yet I need air. Water kills me.",
+        accept: ["FLAME"],
+        difficulty: "medium"
     },
     {
-        word: "MASK",
-        clue: "I can hide your face without changing it."
+        word: "ICE",
+        clue: "I am made of water, but if you put me in water, I disappear.",
+        difficulty: "medium"
     },
     {
-        word: "PHOTO",
-        clue: "I capture a moment and keep it still."
-    }    ,
+        word: "STAMP",
+        clue: "I travel all around the world while staying in one corner.",
+        difficulty: "medium"
+    },
+    {
+        word: "REFLECTION",
+        clue: "You can see me in water, yet I never get wet.",
+        accept: ["REFLECTIONS"],
+        difficulty: "medium"
+    },
+    {
+        word: "MOON",
+        clue: "I wear a different face most nights, yet I never leave the sky.",
+        difficulty: "easy"
+    },
+    {
+        word: "LIGHTNING",
+        clue: "You see me before you hear me, and I am gone before you can point.",
+        difficulty: "medium"
+    },
+    {
+        word: "PENCIL",
+        clue: "I am dug out of the ground, locked inside wood, and used by almost everybody.",
+        accept: ["PENCILS"],
+        difficulty: "easy"
+    },
+    {
+        word: "BOTTLE",
+        clue: "I have a neck but no head, and a cap but no hair.",
+        difficulty: "easy"
+    },
+    {
+        word: "RIVER",
+        clue: "I run but never walk. I have a mouth but never speak. I have a bed but never sleep.",
+        difficulty: "medium"
+    },
+    {
+        word: "NAME",
+        clue: "I belong to you, yet other people use me far more than you do.",
+        accept: ["NAMES"],
+        difficulty: "medium"
+    },
     {
         word: "SILENCE",
-        clue: "I exist when nobody is making a sound."
-    },
-    {
-        word: "SECRET",
-        clue: "I stop being private when everyone knows me."
-    },
-    {
-        word: "FEAR",
-        clue: "I can make your heart race even when the danger is unseen."
-    },
-    {
-        word: "WHISPER",
-        clue: "I am a very quiet way of speaking."
+        clue: "Say my name and I am gone.",
+        difficulty: "hard"
     },
     {
         word: "DARKNESS",
-        clue: "I remain where there is no light."
-    },
-    {
-        word: "FOOTSTEP",
-        clue: "You may hear me after someone has already walked past."
+        clue: "The more of me there is, the less you can see.",
+        accept: ["DARK"],
+        difficulty: "medium"
     },
     {
         word: "TIME",
-        clue: "Everyone experiences me, but nobody can stop me."
+        clue: "I heal wounds and steal youth, yet nobody has ever held me.",
+        difficulty: "medium"
+    },
+    {
+        word: "MEMORY",
+        clue: "I am the only proof of your past, yet I can be rewritten without you knowing.",
+        accept: ["MEMORIES"],
+        difficulty: "hard"
+    },
+    {
+        word: "ANCHOR",
+        clue: "I hold the heaviest ships still, yet I live at the bottom of the sea.",
+        difficulty: "medium"
+    },
+    {
+        word: "EGG",
+        clue: "I have no doors, windows or hinges, yet something golden hides inside me.",
+        accept: ["EGGS"],
+        difficulty: "easy"
+    },
+    {
+        word: "SMOKE",
+        clue: "I rise from the fire without wings, and vanish without leaving a body.",
+        difficulty: "medium"
+    },
+    {
+        word: "WIND",
+        clue: "You can hear me and feel me but never see me, and I bend the tallest trees.",
+        difficulty: "medium"
+    },
+    {
+        word: "INSOMNIA",
+        clue: "I steal your sleep without ever entering your room.",
+        difficulty: "hard"
+    },
+    {
+        word: "NIGHTMARE",
+        clue: "I visit you while you sleep, and the more you fear me, the more real I seem.",
+        accept: ["NIGHTMARES", "DREAM"],
+        difficulty: "hard"
+    },
+    {
+        word: "SHADOW",
+        clue: "I grow tallest just before the light disappears, and then I vanish completely.",
+        accept: ["SHADOWS"],
+        difficulty: "hard"
+    },
+    {
+        word: "SECRET",
+        clue: "I am only worth something while you keep me, and I break the moment you share me.",
+        accept: ["SECRETS"],
+        difficulty: "hard"
     }
 ];
 
@@ -208,147 +339,146 @@ let observationStartTime = 0;
 let observationTimerInterval = null;
 
 const observationQuestions = [
-
     {
-        scene: "🕯️ 🪞 🪑 🧸 🚪",
+        scene: "🔔 🔑 🕯️ 📕 🧸 🚪 🌙",
         question: "Which object was NOT present?",
-        options: ["🧸", "🪑", "🔑", "🚪"],
-        answer: "🔑"
+        options: ["🔔", "🌙", "🛎️", "🕯️"],
+        answer: "🛎️",
+        difficulty: "hard"
     },
-
     {
-        scene: "🔑 🕯️ 📕 🧸 ⏰",
+        scene: "🗝️ ⏰ 🌹 📷 🪞 🎲 🪑",
         question: "Which object was NOT present?",
-        options: ["🔑", "📷", "🧸", "⏰"],
-        answer: "📷"
+        options: ["🪑", "🌹", "🗝️", "🔑"],
+        answer: "🔑",
+        difficulty: "hard"
     },
-
     {
-        scene: "🌹 🪞 🔔 🧸 🎲",
+        scene: "🕰️ 🕯️ 📗 🧸 🚪 🍏 🎸",
         question: "Which object was NOT present?",
-        options: ["🌹", "🔔", "📷", "🎲"],
-        answer: "📷"
+        options: ["⏰", "📗", "🕰️", "🍏"],
+        answer: "⏰",
+        difficulty: "hard"
     },
-
     {
-        scene: "🚪 🕯️ 🎸 🔑 📷",
+        scene: "🥀 🔔 📖 🔦 🧸 🎲 🪞",
         question: "Which object was NOT present?",
-        options: ["🚪", "🎸", "🧸", "📷"],
-        answer: "🧸"
+        options: ["🎲", "🌹", "🥀", "📖"],
+        answer: "🌹",
+        difficulty: "medium"
     },
-
     {
-        scene: "📕 🕯️ 🔔 🌙 🧸",
+        scene: "🌕 🔒 📷 🕯️ 🪆 🎸 ⏳",
         question: "Which object was NOT present?",
-        options: ["📕", "🌙", "🎲", "🔔"],
-        answer: "🎲"
+        options: ["🌕", "🔒", "⏳", "🌙"],
+        answer: "🌙",
+        difficulty: "medium"
     },
-
     {
-        scene: "⏰ 🔑 🌹 🪞 🎸",
+        scene: "📕 📘 📙 🔑 🧸 🌹 🚪",
         question: "Which object was NOT present?",
-        options: ["⏰", "🔑", "🧸", "🎸"],
-        answer: "🧸"
+        options: ["📕", "📘", "🌹", "📗"],
+        answer: "📗",
+        difficulty: "hard"
     },
-
     {
-        scene: "🧸 📷 🕯️ 🚪 🌙",
+        scene: "📸 🔔 🕯️ 🎸 🪞 🔓 🪑",
         question: "Which object was NOT present?",
-        options: ["📷", "🔔", "🚪", "🌙"],
-        answer: "🔔"
+        options: ["📸", "📷", "🔓", "🪑"],
+        answer: "📷",
+        difficulty: "hard"
     },
-
     {
-        scene: "🎲 🪑 📕 🔑 🌹",
+        scene: "🪆 🔑 ⏱️ 🌙 🎲 📗 🍎",
         question: "Which object was NOT present?",
-        options: ["🎲", "📕", "🪞", "🌹"],
-        answer: "🪞"
+        options: ["⏱️", "🍎", "🧸", "🪆"],
+        answer: "🧸",
+        difficulty: "easy"
     },
-
     {
-        scene: "🔔 🎸 🕯️ ⏰ 🪞",
+        scene: "🔦 🔔 📞 🧸 🌹 📕 🚪",
         question: "Which object was NOT present?",
-        options: ["🔔", "🎸", "📷", "🪞"],
-        answer: "📷"
+        options: ["🌹", "📞", "☎️", "🚪"],
+        answer: "☎️",
+        difficulty: "hard"
     },
-
     {
-        scene: "🌙 🧸 🚪 📕 🔑",
+        scene: "🍏 🕯️ 🔑 📷 🌙 🛎️ 🎸",
         question: "Which object was NOT present?",
-        options: ["🌙", "🧸", "🕯️", "🔑"],
-        answer: "🕯️"
+        options: ["🍎", "🔑", "🛎️", "🍏"],
+        answer: "🍎",
+        difficulty: "medium"
     },
-
     {
-        scene: "📷 🌹 🪑 🎲 🕯️",
+        scene: "🔒 ⏰ 🌷 🪞 🧸 🎲 📻",
         question: "Which object was NOT present?",
-        options: ["📷", "🌹", "⏰", "🕯️"],
-        answer: "⏰"
+        options: ["🔒", "🌷", "📻", "🔓"],
+        answer: "🔓",
+        difficulty: "medium"
     },
-
     {
-        scene: "🪞 🔑 🎸 🧸 📕",
+        scene: "🖼️ 🔑 🕯️ 🪑 🔔 🌹 ⏳",
         question: "Which object was NOT present?",
-        options: ["🪞", "🔑", "🎲", "📕"],
-        answer: "🎲"
+        options: ["🪞", "⏳", "🕯️", "🖼️"],
+        answer: "🪞",
+        difficulty: "medium"
     },
-
     {
-        scene: "🚪 ⏰ 🌙 🔔 🪑",
+        scene: "🎻 🧸 📕 🔔 🌙 🔑 🕰️",
         question: "Which object was NOT present?",
-        options: ["🚪", "⏰", "🧸", "🪑"],
-        answer: "🧸"
+        options: ["🧸", "🎸", "🕰️", "🎻"],
+        answer: "🎸",
+        difficulty: "medium"
     },
-
     {
-        scene: "🎸 📷 🌹 🕯️ 🧸",
+        scene: "🌑 🔑 🪆 📷 🕯️ 📺 🍎",
         question: "Which object was NOT present?",
-        options: ["🎸", "📷", "🔑", "🧸"],
-        answer: "🔑"
+        options: ["🌑", "🌕", "📺", "🍎"],
+        answer: "🌕",
+        difficulty: "hard"
     },
-
     {
-        scene: "🪑 📕 ⏰ 🪞 🎲",
+        scene: "🪟 🔔 🕯️ 🧸 📕 🌹 🎲",
         question: "Which object was NOT present?",
-        options: ["🪑", "📕", "🌙", "🎲"],
-        answer: "🌙"
+        options: ["🎲", "🪟", "🚪", "🔔"],
+        answer: "🚪",
+        difficulty: "medium"
     },
-
     {
-        scene: "🔔 🚪 🔑 🌹 📷",
+        scene: "📖 📗 📘 📙 🕯️ 🔑 🌙",
         question: "Which object was NOT present?",
-        options: ["🔔", "🚪", "🧸", "📷"],
-        answer: "🧸"
+        options: ["🌙", "📘", "📖", "📕"],
+        answer: "📕",
+        difficulty: "hard"
     },
-
     {
-        scene: "🌙 🎲 🕯️ 🪞 🎸",
+        scene: "🔕 ⏰ 🌹 🧸 🪑 📷 🎲",
         question: "Which object was NOT present?",
-        options: ["🌙", "🎲", "🔑", "🎸"],
-        answer: "🔑"
+        options: ["🎲", "🪑", "🔕", "🔔"],
+        answer: "🔔",
+        difficulty: "medium"
     },
-
     {
-        scene: "🧸 ⏰ 📷 📕 🚪",
+        scene: "🧵 🧩 🃏 🎲 🕯️ 🔑 📻",
         question: "Which object was NOT present?",
-        options: ["🧸", "⏰", "🌹", "🚪"],
-        answer: "🌹"
+        options: ["✂️", "📻", "🃏", "🧵"],
+        answer: "✂️",
+        difficulty: "easy"
     },
-
     {
-        scene: "🔑 🪑 🌙 🎸 🔔",
+        scene: "📹 🔔 🌹 🪞 ⏰ 🧸 🚪",
         question: "Which object was NOT present?",
-        options: ["🔑", "🪑", "📕", "🔔"],
-        answer: "📕"
+        options: ["🎥", "🚪", "📹", "🌹"],
+        answer: "🎥",
+        difficulty: "hard"
     },
-
     {
-        scene: "🌹 📷 🕯️ 🎲 🪞",
+        scene: "🛋️ 🪑 🕯️ 📕 🔑 🌙 🧸",
         question: "Which object was NOT present?",
-        options: ["🌹", "📷", "⏰", "🪞"],
-        answer: "⏰"
+        options: ["🛏️", "🛋️", "🪑", "🧸"],
+        answer: "🛏️",
+        difficulty: "medium"
     }
-
 ];
 // CHALLENGE 4 VARIABLES
 
@@ -388,127 +518,126 @@ let logicStartTime = 0;
 let logicTimerInterval = null;
 
 const logicQuestions = [
-
     {
-        question: "2   4   8   16   ?",
-        options: ["20", "24", "32", "36"],
-        answer: "32"
+        question: "1   2   6   24   120   ?",
+        options: ["600", "620", "720", "840"],
+        answer: "720",
+        difficulty: "medium"
     },
-
     {
-        question: "3   6   12   24   ?",
-        options: ["36", "42", "48", "54"],
-        answer: "48"
+        question: "2   6   12   20   30   ?",
+        options: ["40", "42", "44", "48"],
+        answer: "42",
+        difficulty: "easy"
     },
-
     {
-        question: "5   10   15   20   ?",
-        options: ["22", "25", "30", "35"],
-        answer: "25"
+        question: "1   3   7   15   31   ?",
+        options: ["47", "55", "62", "63"],
+        answer: "63",
+        difficulty: "medium"
     },
-
     {
-        question: "1   4   9   16   ?",
-        options: ["20", "24", "25", "30"],
-        answer: "25"
+        question: "3   5   9   17   33   ?",
+        options: ["63", "65", "66", "69"],
+        answer: "65",
+        difficulty: "medium"
     },
-
     {
-        question: "10   20   40   80   ?",
-        options: ["100", "120", "140", "160"],
-        answer: "160"
+        question: "1   2   4   7   11   16   ?",
+        options: ["21", "22", "23", "24"],
+        answer: "22",
+        difficulty: "medium"
     },
-
     {
-        question: "2   6   12   20   ?",
-        options: ["24", "28", "30", "32"],
-        answer: "30"
+        question: "0   1   1   2   4   7   13   ?",
+        options: ["20", "21", "24", "26"],
+        answer: "24",
+        difficulty: "hard"
     },
-
     {
-        question: "100   90   80   70   ?",
-        options: ["50", "55", "60", "65"],
-        answer: "60"
+        question: "10   9   7   4   0   ?",
+        options: ["-4", "-5", "-6", "-10"],
+        answer: "-5",
+        difficulty: "easy"
     },
-
     {
-        question: "1   2   4   7   11   ?",
-        options: ["15", "16", "17", "18"],
-        answer: "16"
+        question: "2   10   4   20   8   40   ?",
+        options: ["16", "32", "48", "80"],
+        answer: "16",
+        difficulty: "hard"
     },
-
+    {
+        question: "3   6   5   10   9   18   ?",
+        options: ["16", "17", "19", "36"],
+        answer: "17",
+        difficulty: "medium"
+    },
+    {
+        question: "1   4   10   22   46   ?",
+        options: ["82", "90", "92", "94"],
+        answer: "94",
+        difficulty: "hard"
+    },
+    {
+        question: "7   9   13   21   37   ?",
+        options: ["61", "65", "69", "74"],
+        answer: "69",
+        difficulty: "medium"
+    },
+    {
+        question: "2   4   12   48   240   ?",
+        options: ["960", "1200", "1440", "2400"],
+        answer: "1440",
+        difficulty: "medium"
+    },
+    {
+        question: "2   12   36   80   150   ?",
+        options: ["216", "240", "252", "256"],
+        answer: "252",
+        difficulty: "hard"
+    },
+    {
+        question: "1   11   21   1211   111221   ?",
+        options: ["3112", "211211", "312211", "1112221"],
+        answer: "312211",
+        difficulty: "hard"
+    },
+    {
+        question: "5   10   20   40   80   ?",
+        options: ["120", "140", "160", "200"],
+        answer: "160",
+        difficulty: "easy"
+    },
+    {
+        question: "1   4   9   16   25   ?",
+        options: ["30", "32", "36", "49"],
+        answer: "36",
+        difficulty: "easy"
+    },
     {
         question: "2   3   5   8   13   ?",
-        options: ["18", "20", "21", "23"],
-        answer: "21"
-    },
-
-    {
-        question: "50   45   40   35   ?",
-        options: ["25", "28", "30", "32"],
-        answer: "30"
-    },
-
-    {
-        question: "4   8   16   32   ?",
-        options: ["48", "56", "64", "72"],
-        answer: "64"
-    },
-
-    {
-        question: "81   27   9   3   ?",
-        options: ["0", "1", "2", "3"],
-        answer: "1"
-    },
-
-    {
-        question: "7   14   28   56   ?",
-        options: ["84", "98", "112", "120"],
-        answer: "112"
-    },
-
-    {
-        question: "1   3   6   10   15   ?",
         options: ["18", "20", "21", "24"],
-        answer: "21"
+        answer: "21",
+        difficulty: "medium"
     },
-
     {
-        question: "64   32   16   8   ?",
-        options: ["2", "4", "6", "12"],
-        answer: "4"
+        question: "100   90   81   73   66   ?",
+        options: ["58", "60", "62", "65"],
+        answer: "60",
+        difficulty: "medium"
     },
-
     {
-        question: "11   22   33   44   ?",
-        options: ["50", "55", "66", "77"],
-        answer: "55"
+        question: "3   9   27   81   243   ?",
+        options: ["486", "600", "729", "810"],
+        answer: "729",
+        difficulty: "easy"
     },
-
     {
-        question: "2   5   10   17   26   ?",
-        options: ["35", "36", "37", "38"],
-        answer: "37"
-    },
-
-    {
-        question: "3   9   27   81   ?",
-        options: ["162", "189", "243", "324"],
-        answer: "243"
-    },
-
-    {
-        question: "20   18   15   11   ?",
-        options: ["6", "7", "8", "9"],
-        answer: "6"
-    },
-
-    {
-        question: "1   5   13   29   ?",
-        options: ["45", "57", "61", "63"],
-        answer: "61"
+        question: "6   11   21   36   56   ?",
+        options: ["76", "80", "81", "86"],
+        answer: "81",
+        difficulty: "hard"
     }
-
 ];
 
 // CHALLENGE 5 VARIABLES
@@ -537,6 +666,14 @@ const patternSubmit =
 const patternResultScreen =
     document.getElementById("pattern-result-screen");
 
+// UNDO button for Challenge 5 (created here since it isn't in the HTML)
+const patternUndoBtn = document.createElement("button");
+patternUndoBtn.id = "pattern-undo-btn";
+patternUndoBtn.className = "undo-btn";
+patternUndoBtn.textContent = "UNDO";
+patternUndoBtn.style.display = "none";
+patternSubmit.insertAdjacentElement("afterend", patternUndoBtn);
+
 const patternResultMessage =
     document.getElementById("pattern-result-message");
 
@@ -552,47 +689,86 @@ let patternStartTime = 0;
 let patternTimerInterval = null;
 
 const patternQuestions = [
-
     {
-        pattern: ["▲", "●", "▲", "■", "●"],
-        options: ["▲", "●", "■", "◆"],
+        pattern: ["▲", "■", "◆", "★", "■", "▲"],
+        options: ["▲", "■", "◆", "★", "●"]
     },
-
     {
-        pattern: ["★", "◆", "●", "★", "◆"],
-        options: ["★", "◆", "●", "▲"],
+        pattern: ["●", "▼", "♥", "●", "▼", "■"],
+        options: ["●", "▼", "♥", "■", "★"]
     },
-
     {
-        pattern: ["■", "●", "▲", "●", "■"],
-        options: ["■", "●", "▲", "◆"],
+        pattern: ["★", "◆", "▲", "★", "◆", "▼"],
+        options: ["★", "◆", "▲", "▼", "●"]
     },
-
     {
-        pattern: ["◆", "★", "◆", "●", "★"],
-        options: ["◆", "★", "●", "■"],
+        pattern: ["■", "♥", "●", "■", "♥", "▲"],
+        options: ["■", "♥", "●", "▲", "◆"]
     },
-
     {
-        pattern: ["●", "▲", "■", "▲", "●"],
-        options: ["●", "▲", "■", "◆"],
+        pattern: ["▼", "★", "◆", "▼", "★", "■"],
+        options: ["▼", "★", "◆", "■", "♥"]
     },
-
     {
-        pattern: ["★", "●", "◆", "★", "●"],
-        options: ["★", "●", "◆", "■"],
+        pattern: ["●", "▲", "♥", "●", "▲", "★"],
+        options: ["●", "▲", "♥", "★", "■"]
     },
-
     {
-        pattern: ["▲", "◆", "●", "◆", "▲"],
-        options: ["▲", "◆", "●", "★"],
+        pattern: ["◆", "■", "▼", "◆", "■", "♥"],
+        options: ["◆", "■", "▼", "♥", "▲"]
     },
-
     {
-        pattern: ["■", "★", "●", "■", "◆"],
-        options: ["■", "★", "●", "◆"],
+        pattern: ["▲", "★", "●", "▲", "★", "◆"],
+        options: ["▲", "★", "●", "◆", "▼"]
+    },
+    {
+        pattern: ["♥", "▼", "■", "♥", "▼", "★"],
+        options: ["♥", "▼", "■", "★", "●"]
+    },
+    {
+        pattern: ["●", "◆", "▲", "●", "◆", "♥"],
+        options: ["●", "◆", "▲", "♥", "■"]
+    },
+    {
+        pattern: ["■", "▲", "★", "■", "▲", "♥"],
+        options: ["■", "▲", "★", "♥", "●"]
+    },
+    {
+        pattern: ["◆", "●", "▼", "◆", "●", "★"],
+        options: ["◆", "●", "▼", "★", "▲"]
+    },
+    {
+        pattern: ["▼", "♥", "▲", "▼", "♥", "◆"],
+        options: ["▼", "♥", "▲", "◆", "■"]
+    },
+    {
+        pattern: ["★", "■", "●", "★", "■", "▼"],
+        options: ["★", "■", "●", "▼", "♥"]
+    },
+    {
+        pattern: ["♥", "◆", "▲", "♥", "◆", "●"],
+        options: ["♥", "◆", "▲", "●", "★"]
+    },
+    {
+        pattern: ["▲", "▼", "■", "▲", "▼", "★"],
+        options: ["▲", "▼", "■", "★", "♥"]
+    },
+    {
+        pattern: ["●", "★", "♥", "●", "★", "▲"],
+        options: ["●", "★", "♥", "▲", "◆"]
+    },
+    {
+        pattern: ["◆", "▼", "●", "◆", "▼", "■"],
+        options: ["◆", "▼", "●", "■", "♥"]
+    },
+    {
+        pattern: ["■", "♥", "▼", "■", "♥", "●"],
+        options: ["■", "♥", "▼", "●", "▲"]
+    },
+    {
+        pattern: ["▲", "◆", "★", "▲", "◆", "♥"],
+        options: ["▲", "◆", "★", "♥", "●"]
     }
-
 ];
 
 // FINAL CHALLENGE VARIABLES
@@ -1081,7 +1257,8 @@ function startMemoryChallenge() {
 
     memoryScreen.style.display = "block";
 
-    // Choose a random question only when the challenge starts
+    // Choose a random question only when the challenge starts.
+    // Every entry in memoryQuestions is a 6-symbol sequence.
     const randomIndex =
         Math.floor(Math.random() * memoryQuestions.length);
 
@@ -1099,11 +1276,11 @@ function startMemoryChallenge() {
         memoryQuestion.join(" ");
 
     memorySubmit.style.display = "none";
+    memoryUndoBtn.style.display = "none";
 
     // Challenge timer starts
-    
 
-    let countdown = 5;
+    let countdown = MEMORIZE_SECONDS;
 
     memoryTimer.textContent =
         "MEMORIZE: " + countdown;
@@ -1143,12 +1320,19 @@ function startMemoryChallenge() {
 }
 
 
-function showMemoryOptions() {
-    function updateSelectedSequence() {
+// Maps each emoji symbol to its button for this round, so UNDO can
+// find and deselect the right one.
+let memorySymbolButtons = {};
+
+function updateSelectedSequence() {
 
     selectedSequence.textContent =
         playerAnswer.join(" ");
 }
+
+function showMemoryOptions() {
+
+    memorySymbolButtons = {};
 
     const allSymbols = [
         "🔑", "🕯️", "📕", "⏰", "🌹",
@@ -1165,6 +1349,8 @@ function showMemoryOptions() {
 
         button.textContent = symbol;
         button.classList.add("memory-option");
+
+        memorySymbolButtons[symbol] = button;
 
         button.addEventListener("click", function() {
 
@@ -1195,7 +1381,24 @@ function showMemoryOptions() {
 
         memoryOptions.appendChild(button);
     });
+
+    memoryUndoBtn.style.display = "inline-block";
 }
+
+memoryUndoBtn.addEventListener("click", function() {
+
+    if (playerAnswer.length === 0) return;
+
+    const lastSymbol = playerAnswer.pop();
+
+    updateSelectedSequence();
+
+    const button = memorySymbolButtons[lastSymbol];
+
+    if (button) {
+        button.classList.remove("selected");
+    }
+});
 memorySubmit.addEventListener("click", function() {
 
     // Check if player selected 5 symbols
@@ -1243,6 +1446,7 @@ memorySubmit.addEventListener("click", function() {
         "TIME: " + timeTaken + " SECONDS";
 
     memorySubmit.style.display = "none";
+    memoryUndoBtn.style.display = "none";
 
     memoryOptions.innerHTML = "";
 
@@ -1278,11 +1482,9 @@ function startWordChallenge() {
 
     wordScreen.style.display = "block";
 
-    // Pick a random question
-    const randomIndex =
-        Math.floor(Math.random() * wordQuestions.length);
-
-    currentWordQuestion = wordQuestions[randomIndex];
+    // Pick a question from the "easy" tier - the first content challenge
+    currentWordQuestion =
+        pickQuestionByDifficulty(wordQuestions, "easy");
 
     // Display clue
     wordClue.textContent =
@@ -1337,7 +1539,10 @@ wordSubmit.addEventListener("click", function() {
     }
 
     // Correct answer
-    if (playerAnswer === currentWordQuestion.word) {
+    if (
+        playerAnswer === currentWordQuestion.word ||
+        (currentWordQuestion.accept || []).includes(playerAnswer)
+    ) {
 
     clearInterval(wordCountdown);
 
@@ -1393,11 +1598,14 @@ function startObservationChallenge() {
 
     // Possible positions around the room
     const positions = [
-        { left: "10%", top: "15%" },
-        { left: "38%", top: "10%" },
-        { left: "68%", top: "18%" },
-        { left: "20%", top: "48%" },
-        { left: "60%", top: "52%" }
+        { left: "4%", top: "10%" },
+        { left: "28%", top: "6%" },
+        { left: "52%", top: "12%" },
+        { left: "76%", top: "8%" },
+        { left: "10%", top: "54%" },
+        { left: "34%", top: "58%" },
+        { left: "58%", top: "52%" },
+        { left: "80%", top: "56%" }
     ];
 
     // Randomize positions
@@ -1428,12 +1636,9 @@ function startObservationChallenge() {
 
     observationScreen.style.display = "block";
 
-    // Pick a random question
-    const randomIndex =
-        Math.floor(Math.random() * observationQuestions.length);
-
+    // Pick a question from the "medium" tier - harder than the word challenge
     currentObservationQuestion =
-        observationQuestions[randomIndex];
+        pickQuestionByDifficulty(observationQuestions, "medium");
 
     observationAnswer = "";
 
@@ -1449,9 +1654,9 @@ function startObservationChallenge() {
     createObservationScene(currentObservationQuestion.scene);
 
     observationTimer.textContent =
-        "MEMORIZE: 5";
+        "MEMORIZE: " + MEMORIZE_SECONDS;
 
-    let countdown = 5;
+    let countdown = MEMORIZE_SECONDS;
 
     const sceneTimer = setInterval(function() {
 
@@ -1629,11 +1834,9 @@ function startLogicChallenge() {
 
     logicScreen.style.display = "block";
 
-    const randomIndex =
-        Math.floor(Math.random() * logicQuestions.length);
-
+    // Pick a question from the "hard" tier - the toughest content challenge
     currentLogicQuestion =
-        logicQuestions[randomIndex];
+        pickQuestionByDifficulty(logicQuestions, "hard");
 
     logicAnswer = "";
 
@@ -1768,6 +1971,7 @@ function startPatternChallenge() {
 
     patternScreen.style.display = "block";
 
+    // Every entry in patternQuestions is a 6-symbol pattern.
     const randomIndex =
         Math.floor(Math.random() * patternQuestions.length);
 
@@ -1784,14 +1988,15 @@ function startPatternChallenge() {
     selectedPattern.textContent = "";
 
     patternSubmit.style.display = "none";
+    patternUndoBtn.style.display = "none";
 
     patternDisplay.textContent =
         currentPatternQuestion.pattern.join(" ");
 
     patternTimer.textContent =
-        "MEMORIZE: 5";
+        "MEMORIZE: " + MEMORIZE_SECONDS;
 
-    let countdown = 5;
+    let countdown = MEMORIZE_SECONDS;
 
     const patternCountdown =
         setInterval(function() {
@@ -1824,6 +2029,8 @@ function startPatternChallenge() {
 
 
 function showPatternOptions() {
+
+    patternUndoBtn.style.display = "inline-block";
 
     currentPatternQuestion.options.forEach(function(symbol) {
 
@@ -1880,6 +2087,20 @@ function showPatternOptions() {
         }, 100);
 
 }
+
+patternUndoBtn.addEventListener("click", function() {
+
+    if (patternAnswer.length === 0) return;
+
+    patternAnswer.pop();
+
+    selectedPattern.textContent =
+        patternAnswer.join(" ");
+
+    // Fewer symbols than the pattern means it can't be submitted yet
+    patternSubmit.style.display = "none";
+});
+
 patternSubmit.addEventListener("click", function() {
 
     let correct = true;
@@ -1923,6 +2144,7 @@ patternResultTime.textContent =
 
 patternOptions.innerHTML = "";
 patternSubmit.style.display = "none";
+patternUndoBtn.style.display = "none";
 
     } else {
 

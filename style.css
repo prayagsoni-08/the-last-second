@@ -1,10 +1,10 @@
 /* =====================================================
    THE LAST SECOND — style.css
 
-   Look: a school at midnight. Chalkboard-green dark,
-   chalk-white type, a red marking pen for anything that
-   judges you. Typewriter body text, condensed
-   institutional headings.
+   Look: a school at midnight. Near-black with a red glow,
+   white type, red for anything that judges you (the same
+   look as the Psycho dialogue box). Typewriter body text,
+   condensed institutional headings.
 
    Screen switching: script.js sets style.display to
    "block" / "none" / "flex". This file hides every
@@ -17,14 +17,14 @@
 /* ---------- TOKENS ---------- */
 
 :root {
-    --board: #0e1714;
-    --board-raised: #16231f;
-    --board-line: #2b3d36;
-    --chalk: #e9e6da;
-    --chalk-dim: #97a39a;
-    --pen: #d23a2e;
-    --pen-deep: #8f231b;
-    --tube: #e6dc9c;
+    --board: #0a0707;
+    --board-raised: #150d0e;
+    --board-line: #3b1519;
+    --chalk: #f6f3f3;
+    --chalk-dim: #b0a3a4;
+    --pen: #e0222b;
+    --pen-deep: #8f0f16;
+    --tube: #ff5a5f;
 
     --font-body: "Special Elite", "Courier New", monospace;
     --font-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
@@ -58,7 +58,7 @@ body {
     min-height: 100vh;
     min-height: 100dvh;
     background:
-        radial-gradient(ellipse at 50% 30%, #1b2b26 0%, var(--board) 60%, #070c0a 100%);
+        radial-gradient(ellipse at 50% 30%, #240b0e 0%, var(--board) 60%, #040303 100%);
     background-attachment: fixed;
     color: var(--chalk);
     font-family: var(--font-body);
@@ -155,7 +155,7 @@ button:active {
 
 button:focus-visible,
 input:focus-visible {
-    outline: 3px solid var(--tube);
+    outline: 3px solid var(--chalk);
     outline-offset: 3px;
 }
 
@@ -174,8 +174,9 @@ input:focus-visible {
 #observation-submit:hover,
 #logic-submit:hover,
 #pattern-submit:hover {
-    background: var(--tube);
-    border-color: var(--tube);
+    background: var(--pen);
+    border-color: var(--pen);
+    color: var(--chalk);
 }
 
 /* Screens with two buttons in a row */
@@ -185,8 +186,9 @@ input:focus-visible {
 }
 
 #start-btn:hover {
-    background: var(--tube);
-    border-color: var(--tube);
+    background: var(--pen);
+    border-color: var(--pen);
+    color: var(--chalk);
 }
 
 #start-leaderboard-btn {
@@ -230,6 +232,22 @@ input:focus-visible {
     font-weight: 900;
     max-width: 8em;
     text-wrap: balance;
+}
+
+/* Nﾒ logo: top-left corner of the start screen, deep red */
+#start-screen .brand {
+    position: absolute;
+    top: 1rem;
+    left: 1.25rem;
+    z-index: 2;
+    font-family: "Noto Sans JP", "Yu Gothic", "Meiryo", "MS Gothic", var(--font-body);
+    font-size: clamp(2rem, 6vh, 3rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    color: #8f0f16;
+    text-shadow: 0 0 14px rgba(143, 15, 22, 0.6);
+    user-select: none;
 }
 
 .tagline {
@@ -312,7 +330,7 @@ input:focus-visible {
 /* ---------- SCHOOL (rain) ---------- */
 
 #school-screen {
-    background: linear-gradient(180deg, #08110f 0%, #101c1a 100%);
+    background: linear-gradient(180deg, #070404 0%, #1a0a0c 100%);
 }
 
 .rain {
@@ -320,8 +338,8 @@ input:focus-visible {
     inset: 0;
     pointer-events: none;
     background-image:
-        linear-gradient(103deg, transparent 47%, rgba(185, 208, 220, 0.22) 50%, transparent 53%),
-        linear-gradient(103deg, transparent 47%, rgba(185, 208, 220, 0.12) 50%, transparent 53%);
+        linear-gradient(103deg, transparent 47%, rgba(255, 255, 255, 0.22) 50%, transparent 53%),
+        linear-gradient(103deg, transparent 47%, rgba(255, 255, 255, 0.12) 50%, transparent 53%);
     background-size: 46px 130px, 31px 90px;
     animation: rain-fall 0.55s linear infinite;
 }
@@ -364,8 +382,8 @@ input:focus-visible {
 
 #hallway-screen {
     background:
-        radial-gradient(ellipse at 50% 0%, rgba(230, 220, 156, 0.16) 0%, transparent 55%),
-        #070c0a;
+        radial-gradient(ellipse at 50% 0%, rgba(224, 34, 43, 0.2) 0%, transparent 55%),
+        #050303;
 }
 
 .flicker-light {
@@ -377,7 +395,7 @@ input:focus-visible {
     transform: translateX(-50%);
     background: var(--tube);
     border-radius: 0 0 6px 6px;
-    box-shadow: 0 0 40px 12px rgba(230, 220, 156, 0.45);
+    box-shadow: 0 0 40px 12px rgba(224, 34, 43, 0.55);
     animation: tube-flicker 4.2s steps(1, end) infinite;
 }
 
@@ -407,7 +425,7 @@ input:focus-visible {
 /* ---------- PSYCHO DIALOGUE ---------- */
 
 #psycho-screen {
-    background: #060a09;
+    background: #050404;
 }
 
 .projector-noise {
@@ -444,7 +462,7 @@ input:focus-visible {
     aspect-ratio: 1;
     transform: translateX(-50%);
     pointer-events: none;
-    background: radial-gradient(circle, rgba(200, 225, 215, 0.2) 0%, transparent 65%);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, transparent 65%);
 }
 
 .psycho-silhouette {
@@ -462,7 +480,7 @@ input:focus-visible {
     height: 5.8em;
     background: #000;
     border-radius: 50% 50% 46% 46%;
-    box-shadow: 0 0 0 2px rgba(233, 230, 218, 0.08);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08);
 }
 
 .psycho-body {
@@ -471,7 +489,7 @@ input:focus-visible {
     margin-top: -0.4em;
     background: #000;
     border-radius: 6rem 6rem 0 0;
-    box-shadow: 0 0 0 2px rgba(233, 230, 218, 0.08);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08);
 }
 
 .psycho-dialogue {
@@ -481,7 +499,7 @@ input:focus-visible {
     display: flex;
     flex-direction: column;
     text-align: left;
-    background: rgba(14, 23, 20, 0.85);
+    background: rgba(10, 6, 7, 0.85);
     border: 1px solid var(--board-line);
     border-left: 4px solid var(--pen);
 }
@@ -692,13 +710,30 @@ input:focus-visible {
     width: 100%;
     height: clamp(10rem, 34vh, 19rem);
     margin-top: var(--gap);
-    background:
-        linear-gradient(180deg, #121e1a 0%, #121e1a 68%, #0a1210 68%, #0a1210 100%);
-    border: 2px solid var(--board-line);
+    background: var(--board-raised);
+    border: 2px dashed var(--board-line);
+}
+
+/* After memorising, the box stays (smaller, with a ?) so the
+   screen does not jump around like it used to */
+#observation-scene:empty {
+    height: clamp(5rem, 14vh, 8rem);
+}
+
+#observation-scene:empty::before {
+    content: "?";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 8vh, 4rem);
+    font-weight: 900;
+    color: var(--board-line);
 }
 
 /* nothing in the scene (after memorising): give the space back */
-#observation-scene:empty,
 #memory-sequence:empty,
 #pattern-display:empty,
 #observation-question:empty {
@@ -819,8 +854,8 @@ input:focus-visible {
 
 #final-screen {
     background:
-        radial-gradient(ellipse at 50% 45%, rgba(210, 58, 46, 0.14) 0%, transparent 60%),
-        #070c0a;
+        radial-gradient(ellipse at 50% 45%, rgba(224, 34, 43, 0.16) 0%, transparent 60%),
+        #050303;
 }
 
 .final-container h1 {
@@ -849,7 +884,7 @@ input:focus-visible {
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
     color: var(--chalk);
-    text-shadow: 0 0 30px rgba(233, 230, 218, 0.25);
+    text-shadow: 0 0 30px rgba(255, 255, 255, 0.25);
 }
 
 #final-start,
@@ -865,8 +900,9 @@ input:focus-visible {
 }
 
 #final-start:hover {
-    background: var(--tube);
-    border-color: var(--tube);
+    background: var(--pen);
+    border-color: var(--pen);
+    color: var(--chalk);
 }
 
 #final-stop {
@@ -956,7 +992,7 @@ input:focus-visible {
 
 /* Top three get a marker in the margin, not a medal emoji */
 .leaderboard-entry:nth-child(1) {
-    background: rgba(230, 220, 156, 0.09);
+    background: rgba(224, 34, 43, 0.14);
     box-shadow: inset 4px 0 0 var(--tube);
 }
 
@@ -985,7 +1021,7 @@ input:focus-visible {
     font-size: var(--step--1);
     color: var(--chalk-dim);
     border-color: var(--board-line);
-    background: rgba(14, 23, 20, 0.85);
+    background: rgba(10, 6, 7, 0.85);
 }
 
 #restart-game-btn:hover {
@@ -1002,7 +1038,7 @@ input:focus-visible {
     align-items: center;
     justify-content: center;
     padding: 1.25rem;
-    background: rgba(4, 8, 6, 0.86);
+    background: rgba(4, 2, 2, 0.88);
 }
 
 .restart-box {
@@ -1077,7 +1113,7 @@ input:focus-visible {
     min-height: 2.75rem;
     font-size: var(--step--1);
     color: var(--chalk);
-    background: rgba(14, 23, 20, 0.92);
+    background: rgba(10, 6, 7, 0.92);
     border: 2px solid var(--chalk);
 }
 
@@ -1112,8 +1148,8 @@ input:focus-visible {
 }
 
 @keyframes sound-hint {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(230, 220, 156, 0); }
-    50% { box-shadow: 0 0 0 6px rgba(230, 220, 156, 0.22); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 90, 95, 0); }
+    50% { box-shadow: 0 0 0 6px rgba(255, 90, 95, 0.25); }
 }
 
 .sound-toggle:hover {
