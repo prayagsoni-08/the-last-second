@@ -143,6 +143,247 @@
     </div>
 
 </section>
+
+<!-- LEVEL SELECT -->
+
+<section id="level-select-screen">
+
+    <div class="level-select-container">
+
+        <p class="subtitle">CHOOSE YOUR LEVEL</p>
+
+        <h2>THE LAST SECOND</h2>
+
+        <div class="level-options">
+
+            <button id="level-1-btn">
+                LEVEL 1
+                <span id="level-1-status">THE TEST</span>
+            </button>
+
+            <button id="level-2-btn">
+                LEVEL 2
+                <span id="level-2-status">LOCKED</span>
+            </button>
+
+        </div>
+
+        <button id="reset-progress-btn">
+            RESET ALL PROGRESS
+        </button>
+
+    </div>
+
+</section>
+<section id="level-2-screen">
+
+    <div class="level2-container">
+
+        <p class="challenge-label">CHALLENGE 01</p>
+
+        <h1>ROBOT HUNT</h1>
+
+        <p id="level2-message">
+            Shoot every robot before it disappears.
+        </p>
+
+        <div class="level2-instructions">
+
+            <p>🤖 A robot will appear somewhere in the arena.</p>
+
+            <p>🎯 Click the robot before it disappears.</p>
+
+            <p>⚠️ You get only one chance per robot.</p>
+
+            
+
+            <p>🏆 Destroy all 10 robots to complete the challenge.</p>
+
+            <p>⏱️ Your time starts when you press START.</p>
+
+        </div>
+
+        <button id="level2-start-btn">
+            START CHALLENGE 01
+        </button>
+
+    </div>
+
+</section>
+<section id="robot-hunt-screen">
+    <div class="robot-hunt-container">
+
+        <p class="challenge-label">LEVEL 2 — CHALLENGE 01</p>
+        <h1>ROBOT HUNT</h1>
+
+        <p id="robot-hunt-message">
+            Shoot every robot before it disappears.
+        </p>
+
+        <p id="robot-hunt-timer">TIME: 0.00</p>
+
+        <div id="robot-arena"></div>
+        <button id="robot-restart-btn" style="display: none;">
+    RESTART 
+</button>
+
+    </div>
+</section>
+<section id="card-screen">
+
+    <div class="card-container">
+
+        <p class="challenge-label">CHALLENGE 02</p>
+
+        <h1>CARD TRACK</h1>
+
+        <p id="card-message">
+            Watch the card carefully.
+        </p>
+
+        <div class="card-instructions">
+
+    <p>🃏 One card will be shown.</p>
+
+    <p>👀 Memorize it carefully.</p>
+
+    <p>🔀 The card will flip and shuffle with the others.</p>
+
+    <p>🧠 Follow its movement.</p>
+
+    <p>🎯 Select the card you think is yours.</p>
+
+
+        </div>
+
+        <button id="card-start-btn">
+            START CHALLENGE 02
+        </button>
+        <div id="card-arena"></div>
+
+<p id="card-timer">
+    TIME: 0.00
+</p>
+
+    </div>
+
+</section>
+<section id="pattern9-screen">
+    <div class="pattern9-container">
+
+        <p class="challenge-label">CHALLENGE 03</p>
+
+        <h1>THE NINE DOTS</h1>
+
+        <p id="pattern9-message">
+            Memorize the pattern.
+        </p>
+        <div class="pattern9-instructions">
+    <p>🔵 9 dots will appear like a phone lock screen.</p>
+    <p>👀 Watch the pattern carefully.</p>
+    <p>🧠 Remember the exact order.</p>
+    <p>🎯 Recreate the pattern by clicking the dots.</p>
+    <p>⏱️ You have limited time to complete it.</p>
+    
+</div>
+
+        <div id="pattern9-grid">
+            <button class="pattern-dot" data-dot="1"></button>
+            <button class="pattern-dot" data-dot="2"></button>
+            <button class="pattern-dot" data-dot="3"></button>
+
+            <button class="pattern-dot" data-dot="4"></button>
+            <button class="pattern-dot" data-dot="5"></button>
+            <button class="pattern-dot" data-dot="6"></button>
+
+            <button class="pattern-dot" data-dot="7"></button>
+            <button class="pattern-dot" data-dot="8"></button>
+            <button class="pattern-dot" data-dot="9"></button>
+        </div>
+
+        <p id="pattern9-timer">
+            TIME: 0.00
+        </p>
+
+        <button id="pattern9-start-btn">
+            START CHALLENGE 03
+        </button>
+
+    </div>
+</section>
+<section id="grid-screen">
+    <div class="grid-container">
+
+        <p class="challenge-label">CHALLENGE 04</p>
+
+        <h1>THE GRID</h1>
+
+        <p id="grid-message">
+            Hit the glowing square.
+        </p>
+
+        <div class="grid-instructions">
+            <p>🟦 One square will glow at a time.</p>
+            <p>🎯 Click the glowing square.</p>
+            <p>⚡ The speed increases as you progress.</p>
+            <p>❌ Misses will be counted.</p>
+            <p>🏆 Survive the entire grid to continue.</p>
+        </div>
+
+        <div id="reaction-grid">
+        </div>
+
+        <p id="grid-timer">
+            TIME: 0.00
+        </p>
+
+        <p id="grid-misses">
+            MISSES: 0
+        </p>
+
+        <button id="grid-start-btn">
+            START CHALLENGE 04
+        </button>
+
+    </div>
+</section>
+<section id="door-screen">
+    <div class="door-container">
+
+        <p class="challenge-label">CHALLENGE 05</p>
+
+        <h1>THE TWO DOORS</h1>
+
+        <p id="door-message">
+            Choose the correct door.
+        </p>
+
+        <div class="door-instructions">
+            <p>🚪 Two doors stand before you.</p>
+            <p>🧠 Read the question carefully.</p>
+            <p>🔑 Choose the door that matches the answer.</p>
+            <p>⏱️ Your time will be recorded.</p>
+            <p>❌ Choose wrong and LEVEL 2 restarts.</p>
+        </div>
+
+        <div id="door-question"></div>
+
+        <div id="door-options">
+            <button id="door-left">DOOR I</button>
+            <button id="door-right">DOOR II</button>
+        </div>
+
+        <p id="door-timer">
+            TIME: 0.00
+        </p>
+
+        <button id="door-start-btn">
+            START CHALLENGE 05
+        </button>
+
+    </div>
+</section>
+
 <section id="psycho-screen">
 
     <div class="projector-noise"></div>

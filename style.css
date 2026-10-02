@@ -1350,3 +1350,303 @@ input:focus-visible {
         transition: none;
     }
 }
+/* =========================
+   LEVEL 2 — ROBOT HUNT
+========================= */
+
+#robot-hunt-screen {
+    display: none;
+}
+
+.robot-hunt-container {
+    width: 90%;
+    max-width: 1100px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+#robot-hunt-timer {
+    font-size: 22px;
+    letter-spacing: 2px;
+}
+
+#robot-arena {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    margin-top: 25px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    background: rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+
+.robot-target {
+    position: absolute;
+    width: 55px;
+    height: 55px;
+    cursor: crosshair;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 35px;
+    transition: transform 0.1s;
+}
+
+.robot-target:hover {
+    transform: scale(1.15);
+}
+/* CARD TRACK CHALLENGE */
+
+#card-screen {
+    display: none;
+}
+
+.card-container {
+    width: 90%;
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+#card-arena {
+    position: relative;
+    width: 560px;
+    height: 190px;
+    margin: 30px auto;
+}
+
+.playing-card {
+    position: absolute;
+    top: 10px;
+    width: 110px;
+    height: 160px;
+
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+
+    background: #111;
+    color: white;
+    font-size: 45px;
+
+    cursor: pointer;
+    perspective: 800px;
+
+    transition:
+        left 0.3s ease,
+        transform 0.3s ease;
+}
+
+.playing-card:disabled {
+    cursor: default;
+}
+
+.card-front,
+.card-back {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    backface-visibility: hidden;
+}
+
+.card-front {
+    background: #eee;
+    color: #111;
+    transform: rotateY(180deg);
+}
+
+.card-back {
+    background: #222;
+    color: #777;
+    font-size: 40px;
+}
+
+.playing-card.flipped .card-front {
+    transform: rotateY(0deg);
+}
+
+.playing-card.flipped .card-back {
+    transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+    transition: transform 0.5s;
+}
+#pattern9-screen {
+    display: none;
+}
+
+.pattern9-container {
+    width: 90%;
+    max-width: 700px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+#pattern9-grid {
+    width: 330px;
+    height: 330px;
+    margin: 30px auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 35px;
+    padding: 25px;
+}
+
+.pattern-dot {
+    width: 55px;
+    height: 55px;
+    margin: auto;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.5);
+    background: #111;
+    cursor: pointer;
+    position: relative;
+}
+
+.pattern-dot.active {
+    background: white;
+    box-shadow: 0 0 20px white;
+}
+
+.pattern-dot.selected {
+    background: #777;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+}
+
+#pattern9-timer {
+    font-size: 22px;
+    letter-spacing: 2px;
+}
+.pattern-dot:disabled {
+    cursor: default;
+}
+.pattern9-instructions {
+    margin: 20px auto 25px;
+    max-width: 600px;
+    padding: 15px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.25);
+    text-align: left;
+}
+
+.pattern9-instructions p {
+    margin: 8px 0;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+#grid-screen {
+    display: none;
+}
+
+.grid-container {
+    width: 90%;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.grid-instructions {
+    margin: 20px auto 25px;
+    max-width: 600px;
+    padding: 15px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.25);
+    text-align: left;
+}
+
+.grid-instructions p {
+    margin: 8px 0;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+#reaction-grid {
+    width: 420px;
+    height: 420px;
+    margin: 30px auto;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+}
+
+.grid-square {
+    background: #111;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    cursor: crosshair;
+    transition: background 0.08s;
+}
+
+.grid-square.active {
+    background: white;
+    box-shadow: 0 0 20px white;
+}
+
+#grid-timer,
+#grid-misses {
+    font-size: 18px;
+    letter-spacing: 2px;
+}
+#door-screen {
+    display: none;
+}
+
+.door-container {
+    width: 90%;
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.door-instructions {
+    margin: 20px auto 25px;
+    max-width: 600px;
+    padding: 15px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.25);
+    text-align: left;
+}
+
+.door-instructions p {
+    margin: 8px 0;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+#door-question {
+    margin: 30px auto;
+    font-size: 22px;
+    letter-spacing: 1px;
+}
+
+#door-options {
+    display: flex;
+    justify-content: center;
+    gap: 80px;
+    margin: 30px auto;
+}
+
+#door-options button {
+    width: 180px;
+    height: 280px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    background: #111;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#door-options button:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.25);
+}
+
+#door-timer {
+    font-size: 20px;
+    letter-spacing: 2px;
+}

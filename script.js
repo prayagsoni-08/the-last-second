@@ -30,7 +30,72 @@ const characterScreen = document.getElementById("character-screen");
 const nameScreen = document.getElementById("name-screen");
 const schoolScreen = document.getElementById("school-screen");
 const hallwayScreen = document.getElementById("hallway-screen");
+const levelSelectScreen = document.getElementById("level-select-screen");
 const psychoScreen = document.getElementById("psycho-screen");
+
+const level1Button = document.getElementById("level-1-btn");
+const level2Button = document.getElementById("level-2-btn");
+const level2Screen = document.getElementById("level-2-screen");
+const level2Message = document.getElementById("level2-message");
+const level2Timer = document.getElementById("level2-timer");
+const level2StartButton =
+    document.getElementById("level2-start-btn");
+const resetProgressButton = document.getElementById("reset-progress-btn");
+const level1Status = document.getElementById("level-1-status");
+const level2Status = document.getElementById("level-2-status");
+
+let playerProgress = JSON.parse(
+    localStorage.getItem("lastSecondProgress")
+) || {
+    level1Completed: false,
+    level2Unlocked: false
+};
+function updateLevelSelect() {
+
+    if (playerProgress.level1Completed) {
+        level1Status.textContent = "COMPLETED";
+        level2Status.textContent = "THE HUNT";
+        level2Button.disabled = false;
+    } else {
+        level1Status.textContent = "THE TEST";
+        level2Status.textContent = "LOCKED";
+        level2Button.disabled = true;
+    }
+
+}
+level1Button.addEventListener("click", function () {
+
+    levelSelectScreen.style.display = "none";
+
+    psychoScreen.style.display = "block";
+
+    startPsychoDialogue();
+
+});
+level2Button.addEventListener("click", function () {
+
+    if (!playerProgress.level2Unlocked) {
+        return;
+    }
+
+    levelSelectScreen.style.display = "none";
+
+    startLevel2();
+
+});
+resetProgressButton.addEventListener("click", function () {
+
+    localStorage.removeItem("lastSecondProgress");
+
+    playerProgress = {
+        level1Completed: false,
+        level2Unlocked: false
+    };
+
+    updateLevelSelect();
+
+});
+
 
 const boyButton = document.getElementById("boy-btn");
 const girlButton = document.getElementById("girl-btn");
@@ -959,7 +1024,1153 @@ startLeaderboardBtn.addEventListener(
 
     }
 );
+const robotHuntScreen = document.getElementById("robot-hunt-screen");
+const robotArena = document.getElementById("robot-arena");
+const robotHuntTimer = document.getElementById("robot-hunt-timer");
+const robotHuntMessage = document.getElementById("robot-hunt-message");
+const robotRestartButton =
+    document.getElementById("robot-restart-btn");
 
+
+let robotHuntStartTime = 0;
+let robotHuntTimerInterval = null;
+let robotMoveTimeout = null;
+let robotHuntCount = 0;
+const ROBOTS_TO_HIT = 10;
+
+// CARD CHALLENGE
+const cardScreen =
+    document.getElementById("card-screen");
+
+const cardMessage =
+    document.getElementById("card-message");
+
+const cardStartButton =
+    document.getElementById("card-start-btn");
+
+const cardArena =
+    document.getElementById("card-arena");
+
+const cardTimer =
+    document.getElementById("card-timer");
+
+let cardStartTime = 0;
+let cardTimerInterval = null;
+let cardValues = ["♠", "♥", "♦", "♣"];
+let correctCardIndex = 0;
+let cardShuffleTimeout = null;
+
+// 9-DOT PATTERN CHALLENGE
+
+const pattern9Screen =
+    document.getElementById("pattern9-screen");
+
+const pattern9Message =
+    document.getElementById("pattern9-message");
+
+const pattern9Timer =
+    document.getElementById("pattern9-timer");
+
+const pattern9StartButton =
+    document.getElementById("pattern9-start-btn");
+
+const pattern9Dots =
+    document.querySelectorAll(".pattern-dot");
+
+let pattern9Target = [];
+let pattern9Player = [];
+
+let pattern9StartTime = 0;
+let pattern9TimerInterval = null;
+
+const PATTERN9_TIME_LIMIT = 5;
+
+// GRID CHALLENGE
+
+const gridScreen =
+    document.getElementById("grid-screen");
+
+const gridMessage =
+    document.getElementById("grid-message");
+
+const gridStartButton =
+    document.getElementById("grid-start-btn");
+
+const reactionGrid =
+    document.getElementById("reaction-grid");
+
+const gridTimer =
+    document.getElementById("grid-timer");
+
+const gridMisses =
+    document.getElementById("grid-misses");
+
+let gridStartTime = 0;
+let gridTimerInterval = null;
+let gridActiveSquare = null;
+let gridMissCount = 0;
+let gridRound = 0;
+
+const GRID_TOTAL_ROUNDS = 20;
+
+// TWO DOORS CHALLENGE
+
+const doorScreen =
+    document.getElementById("door-screen");
+
+const doorMessage =
+    document.getElementById("door-message");
+
+const doorQuestion =
+    document.getElementById("door-question");
+
+const doorLeft =
+    document.getElementById("door-left");
+
+const doorRight =
+    document.getElementById("door-right");
+
+const doorTimer =
+    document.getElementById("door-timer");
+
+const doorStartButton =
+    document.getElementById("door-start-btn");
+
+let doorStartTime = 0;
+let doorTimerInterval = null;
+let correctDoor = "";
+const doorQuestions = [
+    {
+        question: "A farmer has 17 sheep. All but 9 run away. How many are left?",
+        left: "8",
+        right: "9",
+        answer: "RIGHT"
+    },
+    {
+        question: "A clock takes 5 seconds to strike 6 times. How long does it take to strike 12 times?",
+        left: "10 seconds",
+        right: "11 seconds",
+        answer: "RIGHT"
+    },
+    {
+        question: "A number is doubled and then increased by 10. The result is 34. What was the number?",
+        left: "12",
+        right: "14",
+        answer: "LEFT"
+    },
+    {
+        question: "What comes next? 1, 11, 21, 1211, 111221, ...",
+        left: "312211",
+        right: "311221",
+        answer: "LEFT"
+    },
+    {
+        question: "A father is 4 times as old as his son. In 20 years, he will be twice as old. How old is the son now?",
+        left: "10",
+        right: "15",
+        answer: "LEFT"
+    },
+    {
+        question: "All Bloops are Razzies. All Razzies are Lazzies. Which must be true?",
+        left: "All Bloops are Lazzies",
+        right: "All Lazzies are Bloops",
+        answer: "LEFT"
+    },
+    {
+        question: "Five machines make five objects in five minutes. How long do 100 machines take to make 100 objects?",
+        left: "5 minutes",
+        right: "100 minutes",
+        answer: "LEFT"
+    },
+    {
+        question: "A room has four corners. A cat sits in each corner. Each cat sees three other cats. How many cats are there?",
+        left: "12",
+        right: "4",
+        answer: "RIGHT"
+    },
+    {
+        question: "A train travels 60 km in 45 minutes. At the same speed, how far does it travel in 2 hours?",
+        left: "160 km",
+        right: "150 km",
+        answer: "LEFT"
+    },
+    {
+        question: "You have 8 identical balls. One is heavier. Can you always find it using a balance scale only twice?",
+        left: "Yes",
+        right: "No",
+        answer: "RIGHT"
+    },
+    {
+        question: "If 3 pencils cost ₹15, how much do 8 pencils cost?",
+        left: "₹40",
+        right: "₹45",
+        answer: "LEFT"
+    },
+    {
+        question: "A sequence follows: 2, 6, 12, 20, 30, ?. What comes next?",
+        left: "40",
+        right: "42",
+        answer: "RIGHT"
+    },
+    {
+        question: "If yesterday was Monday, what day will it be 3 days after tomorrow?",
+        left: "Friday",
+        right: "Saturday",
+        answer: "RIGHT"
+    },
+    {
+        question: "A bat and ball cost ₹110 together. The bat costs ₹100 more than the ball. How much does the ball cost?",
+        left: "₹5",
+        right: "₹10",
+        answer: "LEFT"
+    },
+    {
+        question: "A number is divisible by both 3 and 4. Which number could it be?",
+        left: "18",
+        right: "24",
+        answer: "RIGHT"
+    },
+    {
+        question: "You have 10 candles. You blow out 3. How many candles remain?",
+        left: "3",
+        right: "10",
+        answer: "RIGHT"
+    },
+    {
+        question: "What comes next? 3, 8, 15, 24, 35, ?",
+        left: "48",
+        right: "50",
+        answer: "LEFT"
+    },
+    {
+        question: "A father and son have a combined age of 66. The father's age is the son's age reversed. What ages could they be?",
+        left: "51 and 15",
+        right: "42 and 24",
+        answer: "LEFT"
+    },
+    {
+        question: "If 5 workers finish a job in 12 days, how many days would 10 workers take at the same rate?",
+        left: "6 days",
+        right: "8 days",
+        answer: "LEFT"
+    },
+    {
+        question: "A box contains 6 red, 6 blue and 6 green balls. Without looking, what is the minimum number you must pick to guarantee two balls of the same colour?",
+        left: "4",
+        right: "5",
+        answer: "LEFT"
+    },
+    {
+        question: "A sequence follows: 81, 27, 9, 3, ?. What comes next?",
+        left: "1",
+        right: "0",
+        answer: "LEFT"
+    },
+    {
+        question: "There are 12 months. How many months have 28 days?",
+        left: "1",
+        right: "12",
+        answer: "RIGHT"
+    },
+    {
+        question: "A farmer has chickens and cows. There are 10 heads and 28 legs. How many cows are there?",
+        left: "4",
+        right: "6",
+        answer: "LEFT"
+    },
+    {
+        question: "What is the smallest positive number that is divisible by both 6 and 8?",
+        left: "24",
+        right: "48",
+        answer: "LEFT"
+    }
+];
+function startDoorChallenge() {
+
+    doorScreen.style.display = "block";
+
+    doorStartButton.style.display = "none";
+
+    document.querySelector(".door-instructions").style.display = "none";
+
+    doorLeft.style.display = "inline-block";
+    doorRight.style.display = "inline-block";
+
+    doorMessage.textContent =
+        "Choose the correct answer.";
+
+    doorTimer.textContent =
+        "TIME: 0.00";
+
+    // Pick a random question
+    const question =
+        doorQuestions[
+            Math.floor(Math.random() * doorQuestions.length)
+        ];
+
+    // Save the question for this attempt
+    window.currentDoorQuestion = question;
+
+    setupDoorAnswers(question);
+
+    doorStartTime = performance.now();
+
+    clearInterval(doorTimerInterval);
+
+    doorTimerInterval = setInterval(function() {
+
+        const elapsed =
+            (performance.now() - doorStartTime) / 1000;
+
+        doorTimer.textContent =
+            "TIME: " + elapsed.toFixed(2);
+
+    }, 10);
+}
+function setupDoorAnswers(question) {
+
+    // Randomly decide which physical door gets the correct answer
+    const correctOnLeft = Math.random() < 0.5;
+
+    if (correctOnLeft) {
+
+        doorLeft.textContent = question.left;
+        doorRight.textContent = question.right;
+
+        correctDoor = "LEFT";
+
+    } else {
+
+        doorLeft.textContent = question.right;
+        doorRight.textContent = question.left;
+
+        correctDoor = "RIGHT";
+    }
+
+    doorQuestion.textContent =
+        question.question;
+}
+function chooseDoor(side) {
+
+    doorLeft.disabled = true;
+    doorRight.disabled = true;
+
+    clearInterval(doorTimerInterval);
+    
+    if (side === correctDoor) {
+        level2DoorTime =
+    (performance.now() - doorStartTime) / 1000;
+        const level1Total =
+        memoryTime +
+        wordTime +
+        observationTime +
+        logicTime +
+        patternTime;
+
+    const level2Total =
+        level2RobotTime +
+        level2CardTime +
+        level2PatternTime +
+        level2DoorTime;
+
+    totalChallengeTime =
+        level1Total + level2Total;
+
+    doorMessage.textContent =
+        "LEVEL 2 COMPLETE.";
+
+    doorQuestion.textContent =
+        "YOU SURVIVED THE HUNT.";
+
+    doorLeft.style.display = "none";
+    doorRight.style.display = "none";
+
+    console.log("LEVEL 2 COMPLETE");
+
+    setTimeout(function() {
+
+    const combinedAccuracy =
+        level2Misses + finalAccuracy;
+
+    saveLeaderboardScore();
+
+    doorMessage.textContent =
+        "ALL FIVE CHALLENGES COMPLETED.";
+
+    console.log(
+        "FINAL SCORE:",
+        totalChallengeTime.toFixed(2),
+        "seconds"
+    );
+
+    console.log(
+        "FINAL ACCURACY:",
+        combinedAccuracy.toFixed(2)
+    );
+
+    setTimeout(function() {
+        openLeaderboard();
+    }, 1500);
+
+}, 1500);
+} else {
+
+        doorMessage.textContent =
+            "WRONG DOOR. LEVEL 2 FAILED.";
+
+        console.log("DOOR CHALLENGE FAILED");
+
+        setTimeout(function() {
+            restartLevel2();
+        }, 1200);
+    }
+}
+doorLeft.addEventListener("click", function() {
+    chooseDoor("LEFT");
+});
+
+doorRight.addEventListener("click", function() {
+    chooseDoor("RIGHT");
+});
+doorStartButton.addEventListener("click", function() {
+    startDoorChallenge();
+});
+
+
+function createReactionGrid() {
+    reactionGrid.innerHTML = "";
+
+    for (let i = 0; i < 25; i++) {
+
+        const square = document.createElement("button");
+
+        square.className = "grid-square";
+        square.dataset.index = i;
+
+        square.addEventListener("click", function() {
+            handleGridClick(square);
+        });
+
+        reactionGrid.appendChild(square);
+    }
+}
+let gridMoveTimeout = null;
+
+function showNextGridSquare() {
+    const squares = document.querySelectorAll(".grid-square");
+
+    squares.forEach(function(square) {
+        square.classList.remove("active");
+    });
+
+    const randomIndex = Math.floor(Math.random() * squares.length);
+    gridActiveSquare = randomIndex;
+
+    squares[randomIndex].classList.add("active");
+
+    const speed = Math.max(100, 500 - (gridRound * 20));
+
+    clearTimeout(gridMoveTimeout);
+
+    gridMoveTimeout = setTimeout(function() {
+        if (gridRound < GRID_TOTAL_ROUNDS) {
+            showNextGridSquare();
+        }
+    }, speed);
+}
+function handleGridClick(square) {
+
+    const clickedIndex =
+        Number(square.dataset.index);
+
+    // Correct square
+    if (clickedIndex === gridActiveSquare) {
+
+        gridRound++;
+
+        // Challenge complete
+        if (gridRound >= GRID_TOTAL_ROUNDS) {
+
+            clearInterval(gridTimerInterval);
+            level2Misses = gridMissCount;
+
+            document.querySelectorAll(".grid-square")
+                .forEach(function(square) {
+                    square.classList.remove("active");
+                });
+
+            gridMessage.textContent =
+                "GRID COMPLETE.";
+
+            console.log(
+                "GRID COMPLETE | MISSES:",
+                gridMissCount
+            );
+
+            setTimeout(function() {
+
+    gridScreen.style.display = "none";
+
+    doorScreen.style.display = "block";
+
+    doorStartButton.style.display = "inline-block";
+
+    doorMessage.textContent =
+        "Answer the question and choose the correct door.";
+
+    doorTimer.textContent =
+        "TIME: 0.00";
+
+}, 1200);
+
+return;
+        }
+
+        // Wait for the current speed cycle
+        return;
+    }
+
+    // Wrong square
+    gridMissCount++;
+
+gridMisses.textContent =
+    "MISSES: " + gridMissCount;
+
+if (gridMissCount > 2) {
+
+    clearInterval(gridTimerInterval);
+    clearTimeout(gridMoveTimeout);
+
+    document.querySelectorAll(".grid-square")
+        .forEach(function(square) {
+            square.classList.remove("active");
+        });
+
+    gridMessage.textContent =
+        "TOO MANY MISSES. LEVEL 2 FAILED.";
+
+    console.log(
+        "GRID FAILED | MISSES:",
+        gridMissCount
+    );
+
+    setTimeout(function() {
+        restartLevel2();
+    }, 1200);
+}
+}
+function startGridChallenge() {
+
+    gridScreen.style.display = "block";
+
+    gridStartButton.style.display = "none";
+
+    document.querySelector(".grid-instructions").style.display = "none";
+
+    gridMessage.textContent =
+        "Hit the glowing square.";
+
+    gridTimer.textContent =
+        "TIME: 0.00";
+
+    gridMissCount = 0;
+    gridRound = 0;
+    gridMisses.textContent = "MISSES: 0";
+
+    createReactionGrid();
+
+    gridStartTime = performance.now();
+
+    clearInterval(gridTimerInterval);
+
+    gridTimerInterval = setInterval(function() {
+
+        const elapsed =
+            (performance.now() - gridStartTime) / 1000;
+
+        gridTimer.textContent =
+            "TIME: " + elapsed.toFixed(2);
+
+    }, 10);
+
+    showNextGridSquare();
+}
+gridStartButton.addEventListener("click", function() {
+    startGridChallenge();
+});
+
+function generatePattern9() {
+
+    const allDots = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+    // Shuffle the dots
+    allDots.sort(function() {
+        return Math.random() - 0.5;
+    });
+
+    // Use 5 dots for the pattern
+    pattern9Target = allDots.slice(0, 5);
+
+    pattern9Player = [];
+
+    console.log("PATTERN:", pattern9Target);
+}
+function startPattern9Challenge() {
+
+    pattern9Screen.style.display = "block";
+
+    pattern9StartButton.style.display = "none";
+    document.querySelector(".pattern9-instructions").style.display = "none";
+
+    pattern9Message.textContent =
+        "Memorize the pattern.";
+
+    pattern9Timer.textContent =
+        "TIME: 0.00";
+
+    pattern9Dots.forEach(function(dot) {
+        dot.classList.remove("active");
+        dot.classList.remove("selected");
+    });
+
+    generatePattern9();
+
+    showPattern9();
+}
+pattern9StartButton.addEventListener("click", function() {
+
+    startPattern9Challenge();
+
+});
+function showPattern9() {
+
+    pattern9Target.forEach(function(dotNumber, index) {
+
+        setTimeout(function() {
+
+            const dot =
+                document.querySelector(
+                    '.pattern-dot[data-dot="' +
+                    dotNumber +
+                    '"]'
+                );
+
+            dot.classList.add("active");
+
+            setTimeout(function() {
+                dot.classList.remove("active");
+            }, 350);
+
+        }, index * 400);
+
+    });
+
+    setTimeout(function() {
+
+        pattern9Message.textContent =
+            "NOW RECREATE THE PATTERN.";
+
+        startPattern9Timer();
+
+    }, pattern9Target.length * 400 + 500);
+}
+function startPattern9Timer() {
+
+    pattern9StartTime = performance.now();
+
+    clearInterval(pattern9TimerInterval);
+
+    pattern9TimerInterval = setInterval(function() {
+
+        const elapsed =
+            (performance.now() - pattern9StartTime) / 1000;
+
+        pattern9Timer.textContent =
+            "TIME: " + elapsed.toFixed(2);
+
+        if (elapsed >= PATTERN9_TIME_LIMIT) {
+
+            clearInterval(pattern9TimerInterval);
+
+            pattern9Message.textContent =
+                "TIME'S UP. LEVEL 2 FAILED.";
+
+            setTimeout(function() {
+                restartLevel2();
+            }, 1200);
+        }
+
+    }, 10);
+}
+pattern9Dots.forEach(function(dot) {
+
+    dot.addEventListener("click", function() {
+
+        if (pattern9Player.length >= pattern9Target.length) {
+            return;
+        }
+
+        const dotNumber =
+            Number(dot.dataset.dot);
+
+        pattern9Player.push(dotNumber);
+
+        dot.classList.add("selected");
+
+        const currentIndex =
+            pattern9Player.length - 1;
+
+        // Check immediately
+        if (
+            dotNumber !==
+            pattern9Target[currentIndex]
+        ) {
+
+            clearInterval(pattern9TimerInterval);
+
+            pattern9Message.textContent =
+                "WRONG PATTERN. LEVEL 2 FAILED.";
+
+            pattern9Dots.forEach(function(d) {
+                d.disabled = true;
+            });
+
+            setTimeout(function() {
+                restartLevel2();
+            }, 1200);
+
+            return;
+        }
+
+        // Pattern completed correctly
+        if (
+            pattern9Player.length ===
+            pattern9Target.length
+        ) {
+
+            clearInterval(pattern9TimerInterval);
+            level2PatternTime =
+    (performance.now() - pattern9StartTime) / 1000;
+
+            pattern9Message.textContent =
+                "PATTERN COMPLETE.";
+
+            pattern9Dots.forEach(function(d) {
+    d.disabled = true;
+});
+
+console.log(
+    "PATTERN 9 COMPLETE:",
+    pattern9Player
+);
+
+setTimeout(function() {
+    pattern9Screen.style.display = "none";
+    gridScreen.style.display = "block";
+    gridStartButton.style.display = "inline-block";
+    gridMessage.textContent = "Hit the glowing square.";
+    gridTimer.textContent = "TIME: 0.00";
+    gridMisses.textContent = "MISSES: 0";
+}, 1200);
+        }
+
+    });
+
+});
+
+function startCardChallenge() {
+
+    cardScreen.style.display = "block";
+
+    cardStartButton.style.display = "none";
+    document.querySelector(".card-instructions").style.display = "none";
+    cardArena.innerHTML = "";
+
+    cardMessage.textContent =
+        "Memorize the card.";
+
+    cardTimer.textContent =
+        "TIME: 0.00";
+
+    createCards();
+
+}
+cardStartButton.addEventListener("click", function() {
+
+    cardStartButton.style.display = "none";
+
+    startCardChallenge();
+
+});
+function createCards() {
+
+    cardArena.innerHTML = "";
+
+    const targetValue =
+        cardValues[Math.floor(Math.random() * cardValues.length)];
+
+    correctCardIndex =
+        cardValues.indexOf(targetValue);
+
+    // Create all 4 cards
+    cardValues.forEach(function(value, index) {
+
+        const card = document.createElement("button");
+
+        card.className = "playing-card";
+        card.dataset.value = value;
+        card.dataset.index = index;
+        card.disabled = true;
+
+        card.innerHTML = `
+            <span class="card-front">${value}</span>
+            <span class="card-back">?</span>
+        `;
+
+        cardArena.appendChild(card);
+    });
+
+    const cards =
+        Array.from(document.querySelectorAll(".playing-card"));
+
+    // Hide all cards initially
+    cards.forEach(function(card) {
+        card.style.display = "none";
+    });
+
+    // Show ONLY the target card
+    const targetCard = cards[correctCardIndex];
+
+    targetCard.style.display = "block";
+    targetCard.style.left = "225px";
+    targetCard.classList.add("flipped");
+
+    cardMessage.textContent =
+        "MEMORIZE THIS CARD: " + targetValue;
+
+    // Give the player 2 seconds to memorize it
+    setTimeout(function() {
+
+        // Flip target face-down
+        targetCard.classList.remove("flipped");
+
+        cardMessage.textContent =
+            "GET READY...";
+
+        setTimeout(function() {
+
+            // Show all cards
+            cards.forEach(function(card, index) {
+
+                card.style.display = "block";
+                card.style.left =
+                    [0, 145, 290, 435][index] + "px";
+
+            });
+
+            cardMessage.textContent =
+                "FOLLOW THE CARD...";
+
+            // Now start the actual shuffle
+            setTimeout(function() {
+                shuffleCards();
+            }, 500);
+
+        }, 500);
+
+    }, 2000);
+}
+function flipCards() {
+
+    const cards = document.querySelectorAll(".playing-card");
+
+    cards.forEach(function(card) {
+        card.classList.add("flipped");
+    });
+
+    cardMessage.textContent = "Watch carefully...";
+
+    setTimeout(function() {
+        shuffleCards();
+    }, 800);
+}
+
+function shuffleCards() {
+
+    const cards = Array.from(
+        document.querySelectorAll(".playing-card")
+    );
+
+    const positions = [0, 145, 290, 435];
+
+    // Put cards in their starting positions
+    cards.forEach(function(card, index) {
+        card.style.left = positions[index] + "px";
+        card.disabled = true;
+    });
+
+    cardMessage.textContent =
+        "FOLLOW THE CARD...";
+
+    let shuffleCount = 0;
+
+    function doShuffle() {
+
+        if (shuffleCount >= 12) {
+
+            cardMessage.textContent =
+                "WHICH CARD WAS IT?";
+
+            // Start timer ONLY after shuffle
+            cardStartTime = performance.now();
+
+            clearInterval(cardTimerInterval);
+
+            cardTimerInterval = setInterval(function() {
+
+                const elapsed =
+                    (performance.now() - cardStartTime) / 1000;
+
+                cardTimer.textContent =
+                    "TIME: " + elapsed.toFixed(2);
+
+            }, 10);
+
+            enableCardSelection();
+
+            return;
+        }
+
+        let first =
+            Math.floor(Math.random() * cards.length);
+
+        let second =
+            Math.floor(Math.random() * cards.length);
+
+        while (second === first) {
+            second =
+                Math.floor(Math.random() * cards.length);
+        }
+
+        // Get current positions
+        const firstLeft =
+            parseInt(cards[first].style.left);
+
+        const secondLeft =
+            parseInt(cards[second].style.left);
+
+        // Visually move the cards
+        cards[first].style.left =
+            secondLeft + "px";
+
+        cards[second].style.left =
+            firstLeft + "px";
+
+        // Swap their stored positions
+        const temp = cards[first];
+        cards[first] = cards[second];
+        cards[second] = temp;
+
+        shuffleCount++;
+
+        setTimeout(doShuffle, 350);
+    }
+
+    setTimeout(doShuffle, 500);
+}
+
+function enableCardSelection() {
+
+    const cards = document.querySelectorAll(".playing-card");
+
+    cards.forEach(function(card) {
+
+        card.disabled = false;
+
+        card.onclick = function() {
+
+            // Stop the player from selecting another card
+            cards.forEach(function(c) {
+                c.disabled = true;
+            });
+
+            // Reveal selected card
+            card.classList.add("flipped");
+
+            cardMessage.textContent =
+                "CHECKING...";
+
+            setTimeout(function() {
+
+                if (card.dataset.value === cardValues[correctCardIndex]) {
+
+    clearInterval(cardTimerInterval);
+    level2CardTime =
+    (performance.now() - cardStartTime) / 1000;
+
+    cardMessage.textContent =
+        "CORRECT! YOU FOUND IT.";
+
+    console.log("CARD CHALLENGE PASSED");
+
+    setTimeout(function() {
+
+        cardScreen.style.display = "none";
+
+        pattern9Screen.style.display = "block";
+
+        pattern9StartButton.style.display =
+            "inline-block";
+
+        pattern9Message.textContent =
+            "Memorize the pattern.";
+
+        pattern9Timer.textContent =
+            "TIME: 0.00";
+
+    }, 1200);
+
+                } else {
+
+                    clearInterval(cardTimerInterval);
+
+                    cardMessage.textContent =
+                        "WRONG CARD. LEVEL 2 FAILED.";
+
+                    console.log("CARD CHALLENGE FAILED");
+
+                    setTimeout(function() {
+                        restartLevel2();
+                    }, 1500);
+                }
+
+            }, 700);
+        };
+    });
+}
+function restartLevel2() {
+
+    clearInterval(robotHuntTimerInterval);
+    clearTimeout(robotMoveTimeout);
+    clearInterval(gridTimerInterval);
+
+    robotArena.innerHTML = "";
+
+    level2Screen.style.display = "none";
+    robotHuntScreen.style.display = "block";
+
+    robotHuntMessage.textContent =
+        "LEVEL 2 FAILED. READY TO RESTART?";
+
+    robotRestartButton.style.display = "inline-block";
+}
+robotRestartButton.addEventListener("click", function() {
+
+    restartLevel2();
+
+});
+
+function startLevel2() {
+
+    level2Screen.style.display = "block";
+    robotHuntScreen.style.display = "none";
+
+    level2StartButton.style.display = "inline-block";
+
+}
+level2StartButton.addEventListener("click", function() {
+
+    level2Screen.style.display = "none";
+    robotHuntScreen.style.display = "block";
+
+    startRobotHunt();
+
+});
+function startRobotHunt() {
+
+    robotHuntScreen.style.display = "block";
+
+    robotHuntCount = 0;
+    robotArena.innerHTML = "";
+    robotHuntMessage.textContent = "Shoot every robot before it disappears.";
+
+    robotHuntStartTime = performance.now();
+
+    clearInterval(robotHuntTimerInterval);
+
+    robotHuntTimerInterval = setInterval(function () {
+        const elapsed =
+            (performance.now() - robotHuntStartTime) / 1000;
+
+        robotHuntTimer.textContent =
+            "TIME: " + elapsed.toFixed(2);
+    }, 10);
+
+    showRobot();
+}
+function showRobot() {
+
+    robotArena.innerHTML = "";
+
+    const robot = document.createElement("div");
+
+    robot.className = "robot-target";
+    robot.textContent = "🤖";
+
+    const maxX = robotArena.clientWidth - 55;
+    const maxY = robotArena.clientHeight - 55;
+
+    robot.style.left = Math.random() * maxX + "px";
+    robot.style.top = Math.random() * maxY + "px";
+
+    robotArena.appendChild(robot);
+
+    robotMoveTimeout = setTimeout(function () {
+
+    clearInterval(robotHuntTimerInterval);
+
+    robotArena.innerHTML = "";
+
+    robotHuntMessage.textContent =
+        "YOU MISSED. LEVEL 2 FAILED.";
+
+    robotRestartButton.style.display = "inline-block";
+
+}, 1000);
+
+    robot.addEventListener("click", function () {
+
+        clearTimeout(robotMoveTimeout);
+
+        robotHuntCount++;
+
+        
+        if (robotHuntCount >= ROBOTS_TO_HIT) {
+    clearInterval(robotHuntTimerInterval);
+    level2RobotTime =
+    (performance.now() - robotHuntStartTime) / 1000;
+
+    robotHuntMessage.textContent =
+        "ROBOT HUNT COMPLETE.";
+
+    setTimeout(function() {
+        robotHuntScreen.style.display = "none";
+        cardScreen.style.display = "block";
+
+        cardStartButton.style.display = "inline-block";
+        cardArena.innerHTML = "";
+
+        cardMessage.textContent =
+            "Watch the card carefully.";
+        cardTimer.textContent =
+            "TIME: 0.00";
+    }, 1200);
+
+    return;
+}
+        showRobot();
+    });
+}
 // =========================
 // PLAYER SCORE
 // =========================
@@ -969,6 +2180,12 @@ let wordTime = 0;
 let observationTime = 0;
 let logicTime = 0;
 let patternTime = 0;
+
+let level2RobotTime = 0;
+let level2CardTime = 0;
+let level2PatternTime = 0;
+let level2DoorTime = 0;
+let level2Misses = 0;
 
 let finalAccuracy = 0;
 let totalChallengeTime = 0;
@@ -1064,9 +2281,9 @@ hallwayContinue.addEventListener("click", function () {
 
     hallwayScreen.style.display = "none";
 
-    psychoScreen.style.display = "block";
+    levelSelectScreen.style.display = "block";
 
-    startPsychoDialogue();
+    updateLevelSelect();
 
 });
 
@@ -2287,10 +3504,14 @@ finalStop.addEventListener("click", function() {
     finalAccuracy = parseFloat(difference.toFixed(2));
 
     if (difference <= 0.05) {
-    totalChallengeTime =
-        memoryTime + wordTime + observationTime + logicTime + patternTime;
+        playerProgress.level1Completed = true;
+playerProgress.level2Unlocked = true;
 
-    saveLeaderboardScore();
+localStorage.setItem(
+    "lastSecondProgress",
+    JSON.stringify(playerProgress)
+);
+    
 
     finalMessage.textContent =
         "STOPPED: " + finalTime.toFixed(2) +
@@ -2419,7 +3640,7 @@ async function saveLeaderboardScore() {
             name: playerName,
             gender: playerGender.toUpperCase(),
             total_time: Number(totalChallengeTime.toFixed(2)),
-            accuracy: Number(finalAccuracy.toFixed(2))
+            accuracy: Number((level2Misses + finalAccuracy).toFixed(2))
         })
         .select();
 
