@@ -1,3 +1,13 @@
+
+// =====================================================
+// THE LAST SECOND — script.js
+//
+// Story:   title -> character -> name -> school -> hallway
+//          -> (Psycho intro, first time only) -> THE BOARD
+// Board:   five challenges, each unlocked by the one before,
+//          then the final test. Progress is saved on this device.
+// =====================================================
+
 const SUPABASE_URL = "https://ovrqybbmrhzfsglwchoc.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_COGRe74WATPeKdJ72_NrUw_fK6AlowZ";
 
@@ -6,911 +16,28 @@ const supabaseClient = window.supabase.createClient(
     SUPABASE_PUBLISHABLE_KEY
 );
 
-// How long the player gets to memorize before Challenges 1, 3 and 5
-// (Memory, Observation, Pattern) hide the content and ask them to recall it.
-const MEMORIZE_SECONDS = 10;
+// ---------- SMALL HELPERS ----------
 
-// Difficulty tiers picked from as the player advances through the
-// content-based challenges: Word (easiest) -> Observation -> Logic (hardest).
-function pickQuestionByDifficulty(pool, difficulty) {
-    const matches = pool.filter(function (q) {
-        return q.difficulty === difficulty;
-    });
+const $ = function (id) { return document.getElementById(id); };
 
-    const source = matches.length > 0 ? matches : pool;
-
-    return source[Math.floor(Math.random() * source.length)];
+function sleep(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
 }
-// ---------- GET HTML ELEMENTS ----------
 
-const startButton = document.getElementById("start-btn");
+function randInt(n) { return Math.floor(Math.random() * n); }
 
-const startScreen = document.getElementById("start-screen");
-const characterScreen = document.getElementById("character-screen");
-const nameScreen = document.getElementById("name-screen");
-const schoolScreen = document.getElementById("school-screen");
-const hallwayScreen = document.getElementById("hallway-screen");
-const levelSelectScreen = document.getElementById("level-select-screen");
-const psychoScreen = document.getElementById("psycho-screen");
+function pick(list) { return list[randInt(list.length)]; }
 
-const level1Button = document.getElementById("level-1-btn");
-const level2Button = document.getElementById("level-2-btn");
-const level2Screen = document.getElementById("level-2-screen");
-const level2Message = document.getElementById("level2-message");
-const level2Timer = document.getElementById("level2-timer");
-const level2StartButton =
-    document.getElementById("level2-start-btn");
-const resetProgressButton = document.getElementById("reset-progress-btn");
-const level1Status = document.getElementById("level-1-status");
-const level2Status = document.getElementById("level-2-status");
-
-let playerProgress = JSON.parse(
-    localStorage.getItem("lastSecondProgress")
-) || {
-    level1Completed: false,
-    level2Unlocked: false
-};
-function updateLevelSelect() {
-
-    if (playerProgress.level1Completed) {
-        level1Status.textContent = "COMPLETED";
-        level2Status.textContent = "THE HUNT";
-        level2Button.disabled = false;
-    } else {
-        level1Status.textContent = "THE TEST";
-        level2Status.textContent = "LOCKED";
-        level2Button.disabled = true;
+function shuffled(list) {
+    const copy = list.slice();
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = randInt(i + 1);
+        const t = copy[i]; copy[i] = copy[j]; copy[j] = t;
     }
-
+    return copy;
 }
-level1Button.addEventListener("click", function () {
 
-    levelSelectScreen.style.display = "none";
-
-    psychoScreen.style.display = "block";
-
-    startPsychoDialogue();
-
-});
-level2Button.addEventListener("click", function () {
-
-    if (!playerProgress.level2Unlocked) {
-        return;
-    }
-
-    levelSelectScreen.style.display = "none";
-
-    startLevel2();
-
-});
-resetProgressButton.addEventListener("click", function () {
-
-    localStorage.removeItem("lastSecondProgress");
-
-    playerProgress = {
-        level1Completed: false,
-        level2Unlocked: false
-    };
-
-    updateLevelSelect();
-
-});
-
-
-const boyButton = document.getElementById("boy-btn");
-const girlButton = document.getElementById("girl-btn");
-
-const continueButton = document.getElementById("continue-btn");
-const enterSchoolButton = document.getElementById("enter-school-btn");
-const hallwayContinue = document.getElementById("hallway-continue");
-
-const nameInput = document.getElementById("player-name");
-const nameError = document.getElementById("name-error");
-
-const psychoText = document.getElementById("psycho-text");
-const psychoName = document.getElementById("psycho-name");
-const psychoNext = document.getElementById("psycho-next");
-const psychoSkip = document.getElementById("psycho-skip");
-const psychoActions = document.getElementById("psycho-actions");
-// MEMORY CHALLENGE
-const memoryScreen = document.getElementById("memory-screen");
-const memoryMessage = document.getElementById("memory-message");
-const memorySequence = document.getElementById("memory-sequence");
-const memoryOptions = document.getElementById("memory-options");
-const selectedSequence =
-    document.getElementById("selected-sequence");
-const memoryTimer = document.getElementById("memory-timer");
-const memorySubmit = document.getElementById("memory-submit");
-const memoryResultScreen =
-    document.getElementById("memory-result-screen");
-
-// UNDO button for Challenge 1 (created here since it isn't in the HTML)
-const memoryUndoBtn = document.createElement("button");
-memoryUndoBtn.id = "memory-undo-btn";
-memoryUndoBtn.className = "undo-btn";
-memoryUndoBtn.textContent = "UNDO";
-memoryUndoBtn.style.display = "none";
-memorySubmit.insertAdjacentElement("afterend", memoryUndoBtn);
-
-const resultMessage =
-    document.getElementById("result-message");
-
-const resultTime =
-    document.getElementById("result-time");
-
-const resultContinue =
-    document.getElementById("result-continue");
-
-let memoryQuestion = [];
-let playerAnswer = [];
-let memoryStartTime = 0;
-let memoryTimerInterval = null;
-// 6-symbol sequences drawn only from a 12-symbol pool:
-// 🔑 🕯️ 📕 ⏰ 🌹 🎲 🧸 🔔 📷 🍎 🌙 🎸
-const memoryQuestions = [
-    ["🔑", "🕯️", "📕", "⏰", "🌹", "🎲"],
-    ["🧸", "🔔", "📷", "🍎", "🌙", "🎸"],
-    ["🌹", "🎲", "🧸", "🔔", "📷", "🍎"],
-    ["🎸", "🔑", "🕯️", "📕", "⏰", "🌹"],
-    ["📷", "🍎", "🌙", "🎸", "🔑", "🕯️"],
-    ["📕", "⏰", "🌹", "🎲", "🧸", "🔔"],
-    ["🌙", "🎸", "🔑", "🕯️", "📕", "⏰"],
-    ["🎲", "🧸", "🔔", "📷", "🍎", "🌙"],
-    ["🕯️", "📕", "⏰", "🌹", "🎲", "🧸"],
-    ["🔔", "📷", "🍎", "🌙", "🎸", "🔑"],
-    ["⏰", "🌹", "🎲", "🧸", "🔔", "📷"],
-    ["🍎", "🌙", "🎸", "🔑", "🕯️", "📕"],
-    ["🔑", "📷", "🎲", "🕯️", "🍎", "⏰"],
-    ["🧸", "🌙", "🔔", "🎸", "📕", "🌹"],
-    ["📕", "🔑", "🌹", "🍎", "🎲", "🌙"],
-    ["🎸", "🧸", "⏰", "🔔", "🕯️", "📷"],
-    ["🌹", "📷", "🔑", "🌙", "🧸", "📕"],
-    ["🍎", "🎲", "🕯️", "🎸", "🔔", "⏰"],
-    ["📷", "🌹", "🧸", "🔑", "📕", "🎸"],
-    ["🌙", "⏰", "🍎", "🔔", "🎲", "🕯️"]
-];
-
-// WORD CHALLENGE
-const wordScreen = document.getElementById("word-screen");
-const wordClue = document.getElementById("word-clue");
-const wordDisplay = document.getElementById("word-display");
-const wordInput = document.getElementById("word-input");
-const wordTimer = document.getElementById("word-timer");
-const wordMessage = document.getElementById("word-message");
-const wordSubmit = document.getElementById("word-submit");
-const wordResultScreen =
-    document.getElementById("word-result-screen");
-
-const wordResultMessage =
-    document.getElementById("word-result-message");
-
-const wordResultTime =
-    document.getElementById("word-result-time");
-
-const wordResultContinue =
-    document.getElementById("word-result-continue");
-
-let currentWordQuestion = null;
-let wordStartTime = 0;
-let wordCountdown = null;
-const wordQuestions = [
-    {
-        word: "HOLE",
-        clue: "The more of me you take away, the bigger I become.",
-        difficulty: "easy"
-    },
-    {
-        word: "TOMORROW",
-        clue: "I am always a day away, yet I never arrive.",
-        accept: ["FUTURE"],
-        difficulty: "medium"
-    },
-    {
-        word: "MAP",
-        clue: "I have rivers without water, cities without people and roads without travellers.",
-        accept: ["ATLAS"],
-        difficulty: "medium"
-    },
-    {
-        word: "BREATH",
-        clue: "I am lighter than a feather, yet the strongest person cannot hold me for long.",
-        accept: ["BREATHE"],
-        difficulty: "medium"
-    },
-    {
-        word: "KEYBOARD",
-        clue: "I have many keys, yet I open no door. I have a space, yet no room.",
-        difficulty: "easy"
-    },
-    {
-        word: "NEEDLE",
-        clue: "I have one eye, yet I cannot see. I pull a thread behind me.",
-        difficulty: "easy"
-    },
-    {
-        word: "SPONGE",
-        clue: "I am full of holes, yet I still hold water.",
-        difficulty: "easy"
-    },
-    {
-        word: "TOWEL",
-        clue: "The more I dry, the wetter I get.",
-        difficulty: "easy"
-    },
-    {
-        word: "COFFIN",
-        clue: "The one who makes me does not need me. The one who buys me does not use me. The one who uses me never knows.",
-        accept: ["CASKET"],
-        difficulty: "hard"
-    },
-    {
-        word: "FIRE",
-        clue: "I am not alive, yet I grow. I have no lungs, yet I need air. Water kills me.",
-        accept: ["FLAME"],
-        difficulty: "medium"
-    },
-    {
-        word: "ICE",
-        clue: "I am made of water, but if you put me in water, I disappear.",
-        difficulty: "medium"
-    },
-    {
-        word: "STAMP",
-        clue: "I travel all around the world while staying in one corner.",
-        difficulty: "medium"
-    },
-    {
-        word: "REFLECTION",
-        clue: "You can see me in water, yet I never get wet.",
-        accept: ["REFLECTIONS"],
-        difficulty: "medium"
-    },
-    {
-        word: "MOON",
-        clue: "I wear a different face most nights, yet I never leave the sky.",
-        difficulty: "easy"
-    },
-    {
-        word: "LIGHTNING",
-        clue: "You see me before you hear me, and I am gone before you can point.",
-        difficulty: "medium"
-    },
-    {
-        word: "PENCIL",
-        clue: "I am dug out of the ground, locked inside wood, and used by almost everybody.",
-        accept: ["PENCILS"],
-        difficulty: "easy"
-    },
-    {
-        word: "BOTTLE",
-        clue: "I have a neck but no head, and a cap but no hair.",
-        difficulty: "easy"
-    },
-    {
-        word: "RIVER",
-        clue: "I run but never walk. I have a mouth but never speak. I have a bed but never sleep.",
-        difficulty: "medium"
-    },
-    {
-        word: "NAME",
-        clue: "I belong to you, yet other people use me far more than you do.",
-        accept: ["NAMES"],
-        difficulty: "medium"
-    },
-    {
-        word: "SILENCE",
-        clue: "Say my name and I am gone.",
-        difficulty: "hard"
-    },
-    {
-        word: "DARKNESS",
-        clue: "The more of me there is, the less you can see.",
-        accept: ["DARK"],
-        difficulty: "medium"
-    },
-    {
-        word: "TIME",
-        clue: "I heal wounds and steal youth, yet nobody has ever held me.",
-        difficulty: "medium"
-    },
-    {
-        word: "MEMORY",
-        clue: "I am the only proof of your past, yet I can be rewritten without you knowing.",
-        accept: ["MEMORIES"],
-        difficulty: "hard"
-    },
-    {
-        word: "ANCHOR",
-        clue: "I hold the heaviest ships still, yet I live at the bottom of the sea.",
-        difficulty: "medium"
-    },
-    {
-        word: "EGG",
-        clue: "I have no doors, windows or hinges, yet something golden hides inside me.",
-        accept: ["EGGS"],
-        difficulty: "easy"
-    },
-    {
-        word: "SMOKE",
-        clue: "I rise from the fire without wings, and vanish without leaving a body.",
-        difficulty: "medium"
-    },
-    {
-        word: "WIND",
-        clue: "You can hear me and feel me but never see me, and I bend the tallest trees.",
-        difficulty: "medium"
-    },
-    {
-        word: "INSOMNIA",
-        clue: "I steal your sleep without ever entering your room.",
-        difficulty: "hard"
-    },
-    {
-        word: "NIGHTMARE",
-        clue: "I visit you while you sleep, and the more you fear me, the more real I seem.",
-        accept: ["NIGHTMARES", "DREAM"],
-        difficulty: "hard"
-    },
-    {
-        word: "SHADOW",
-        clue: "I grow tallest just before the light disappears, and then I vanish completely.",
-        accept: ["SHADOWS"],
-        difficulty: "hard"
-    },
-    {
-        word: "SECRET",
-        clue: "I am only worth something while you keep me, and I break the moment you share me.",
-        accept: ["SECRETS"],
-        difficulty: "hard"
-    }
-];
-
-// OBSERVATION CHALLENGE
-const observationScreen =
-    document.getElementById("observation-screen");
-
-const observationMessage =
-    document.getElementById("observation-message");
-
-const observationScene =
-    document.getElementById("observation-scene");
-
-const observationQuestion =
-    document.getElementById("observation-question");
-
-const observationOptions =
-    document.getElementById("observation-options");
-
-const observationTimer =
-    document.getElementById("observation-timer");
-
-const observationSubmit =
-    document.getElementById("observation-submit");
-const observationResultScreen =
-    document.getElementById("observation-result-screen");
-
-const observationResultMessage =
-    document.getElementById("observation-result-message");
-
-const observationResultTime =
-    document.getElementById("observation-result-time");
-
-const observationResultContinue =
-    document.getElementById("observation-result-continue");
-
-let currentObservationQuestion = null;
-let observationAnswer = "";
-let observationStartTime = 0;
-let observationTimerInterval = null;
-
-const observationQuestions = [
-    {
-        scene: "🔔 🔑 🕯️ 📕 🧸 🚪 🌙",
-        question: "Which object was NOT present?",
-        options: ["🔔", "🌙", "🛎️", "🕯️"],
-        answer: "🛎️",
-        difficulty: "hard"
-    },
-    {
-        scene: "🗝️ ⏰ 🌹 📷 🪞 🎲 🪑",
-        question: "Which object was NOT present?",
-        options: ["🪑", "🌹", "🗝️", "🔑"],
-        answer: "🔑",
-        difficulty: "hard"
-    },
-    {
-        scene: "🕰️ 🕯️ 📗 🧸 🚪 🍏 🎸",
-        question: "Which object was NOT present?",
-        options: ["⏰", "📗", "🕰️", "🍏"],
-        answer: "⏰",
-        difficulty: "hard"
-    },
-    {
-        scene: "🥀 🔔 📖 🔦 🧸 🎲 🪞",
-        question: "Which object was NOT present?",
-        options: ["🎲", "🌹", "🥀", "📖"],
-        answer: "🌹",
-        difficulty: "medium"
-    },
-    {
-        scene: "🌕 🔒 📷 🕯️ 🪆 🎸 ⏳",
-        question: "Which object was NOT present?",
-        options: ["🌕", "🔒", "⏳", "🌙"],
-        answer: "🌙",
-        difficulty: "medium"
-    },
-    {
-        scene: "📕 📘 📙 🔑 🧸 🌹 🚪",
-        question: "Which object was NOT present?",
-        options: ["📕", "📘", "🌹", "📗"],
-        answer: "📗",
-        difficulty: "hard"
-    },
-    {
-        scene: "📸 🔔 🕯️ 🎸 🪞 🔓 🪑",
-        question: "Which object was NOT present?",
-        options: ["📸", "📷", "🔓", "🪑"],
-        answer: "📷",
-        difficulty: "hard"
-    },
-    {
-        scene: "🪆 🔑 ⏱️ 🌙 🎲 📗 🍎",
-        question: "Which object was NOT present?",
-        options: ["⏱️", "🍎", "🧸", "🪆"],
-        answer: "🧸",
-        difficulty: "easy"
-    },
-    {
-        scene: "🔦 🔔 📞 🧸 🌹 📕 🚪",
-        question: "Which object was NOT present?",
-        options: ["🌹", "📞", "☎️", "🚪"],
-        answer: "☎️",
-        difficulty: "hard"
-    },
-    {
-        scene: "🍏 🕯️ 🔑 📷 🌙 🛎️ 🎸",
-        question: "Which object was NOT present?",
-        options: ["🍎", "🔑", "🛎️", "🍏"],
-        answer: "🍎",
-        difficulty: "medium"
-    },
-    {
-        scene: "🔒 ⏰ 🌷 🪞 🧸 🎲 📻",
-        question: "Which object was NOT present?",
-        options: ["🔒", "🌷", "📻", "🔓"],
-        answer: "🔓",
-        difficulty: "medium"
-    },
-    {
-        scene: "🖼️ 🔑 🕯️ 🪑 🔔 🌹 ⏳",
-        question: "Which object was NOT present?",
-        options: ["🪞", "⏳", "🕯️", "🖼️"],
-        answer: "🪞",
-        difficulty: "medium"
-    },
-    {
-        scene: "🎻 🧸 📕 🔔 🌙 🔑 🕰️",
-        question: "Which object was NOT present?",
-        options: ["🧸", "🎸", "🕰️", "🎻"],
-        answer: "🎸",
-        difficulty: "medium"
-    },
-    {
-        scene: "🌑 🔑 🪆 📷 🕯️ 📺 🍎",
-        question: "Which object was NOT present?",
-        options: ["🌑", "🌕", "📺", "🍎"],
-        answer: "🌕",
-        difficulty: "hard"
-    },
-    {
-        scene: "🪟 🔔 🕯️ 🧸 📕 🌹 🎲",
-        question: "Which object was NOT present?",
-        options: ["🎲", "🪟", "🚪", "🔔"],
-        answer: "🚪",
-        difficulty: "medium"
-    },
-    {
-        scene: "📖 📗 📘 📙 🕯️ 🔑 🌙",
-        question: "Which object was NOT present?",
-        options: ["🌙", "📘", "📖", "📕"],
-        answer: "📕",
-        difficulty: "hard"
-    },
-    {
-        scene: "🔕 ⏰ 🌹 🧸 🪑 📷 🎲",
-        question: "Which object was NOT present?",
-        options: ["🎲", "🪑", "🔕", "🔔"],
-        answer: "🔔",
-        difficulty: "medium"
-    },
-    {
-        scene: "🧵 🧩 🃏 🎲 🕯️ 🔑 📻",
-        question: "Which object was NOT present?",
-        options: ["✂️", "📻", "🃏", "🧵"],
-        answer: "✂️",
-        difficulty: "easy"
-    },
-    {
-        scene: "📹 🔔 🌹 🪞 ⏰ 🧸 🚪",
-        question: "Which object was NOT present?",
-        options: ["🎥", "🚪", "📹", "🌹"],
-        answer: "🎥",
-        difficulty: "hard"
-    },
-    {
-        scene: "🛋️ 🪑 🕯️ 📕 🔑 🌙 🧸",
-        question: "Which object was NOT present?",
-        options: ["🛏️", "🛋️", "🪑", "🧸"],
-        answer: "🛏️",
-        difficulty: "medium"
-    }
-];
-// CHALLENGE 4 VARIABLES
-
-const logicScreen =
-    document.getElementById("logic-screen");
-
-const logicMessage =
-    document.getElementById("logic-message");
-
-const logicQuestion =
-    document.getElementById("logic-question");
-
-const logicOptions =
-    document.getElementById("logic-options");
-
-const logicTimer =
-    document.getElementById("logic-timer");
-
-const logicSubmit =
-    document.getElementById("logic-submit");
-
-const logicResultScreen =
-    document.getElementById("logic-result-screen");
-
-const logicResultMessage =
-    document.getElementById("logic-result-message");
-
-const logicResultTime =
-    document.getElementById("logic-result-time");
-
-const logicResultContinue =
-    document.getElementById("logic-result-continue");
-
-let currentLogicQuestion = null;
-let logicAnswer = "";
-let logicStartTime = 0;
-let logicTimerInterval = null;
-
-const logicQuestions = [
-    {
-        question: "1   2   6   24   120   ?",
-        options: ["600", "620", "720", "840"],
-        answer: "720",
-        difficulty: "medium"
-    },
-    {
-        question: "2   6   12   20   30   ?",
-        options: ["40", "42", "44", "48"],
-        answer: "42",
-        difficulty: "easy"
-    },
-    {
-        question: "1   3   7   15   31   ?",
-        options: ["47", "55", "62", "63"],
-        answer: "63",
-        difficulty: "medium"
-    },
-    {
-        question: "3   5   9   17   33   ?",
-        options: ["63", "65", "66", "69"],
-        answer: "65",
-        difficulty: "medium"
-    },
-    {
-        question: "1   2   4   7   11   16   ?",
-        options: ["21", "22", "23", "24"],
-        answer: "22",
-        difficulty: "medium"
-    },
-    {
-        question: "0   1   1   2   4   7   13   ?",
-        options: ["20", "21", "24", "26"],
-        answer: "24",
-        difficulty: "hard"
-    },
-    {
-        question: "10   9   7   4   0   ?",
-        options: ["-4", "-5", "-6", "-10"],
-        answer: "-5",
-        difficulty: "easy"
-    },
-    {
-        question: "2   10   4   20   8   40   ?",
-        options: ["16", "32", "48", "80"],
-        answer: "16",
-        difficulty: "hard"
-    },
-    {
-        question: "3   6   5   10   9   18   ?",
-        options: ["16", "17", "19", "36"],
-        answer: "17",
-        difficulty: "medium"
-    },
-    {
-        question: "1   4   10   22   46   ?",
-        options: ["82", "90", "92", "94"],
-        answer: "94",
-        difficulty: "hard"
-    },
-    {
-        question: "7   9   13   21   37   ?",
-        options: ["61", "65", "69", "74"],
-        answer: "69",
-        difficulty: "medium"
-    },
-    {
-        question: "2   4   12   48   240   ?",
-        options: ["960", "1200", "1440", "2400"],
-        answer: "1440",
-        difficulty: "medium"
-    },
-    {
-        question: "2   12   36   80   150   ?",
-        options: ["216", "240", "252", "256"],
-        answer: "252",
-        difficulty: "hard"
-    },
-    {
-        question: "1   11   21   1211   111221   ?",
-        options: ["3112", "211211", "312211", "1112221"],
-        answer: "312211",
-        difficulty: "hard"
-    },
-    {
-        question: "5   10   20   40   80   ?",
-        options: ["120", "140", "160", "200"],
-        answer: "160",
-        difficulty: "easy"
-    },
-    {
-        question: "1   4   9   16   25   ?",
-        options: ["30", "32", "36", "49"],
-        answer: "36",
-        difficulty: "easy"
-    },
-    {
-        question: "2   3   5   8   13   ?",
-        options: ["18", "20", "21", "24"],
-        answer: "21",
-        difficulty: "medium"
-    },
-    {
-        question: "100   90   81   73   66   ?",
-        options: ["58", "60", "62", "65"],
-        answer: "60",
-        difficulty: "medium"
-    },
-    {
-        question: "3   9   27   81   243   ?",
-        options: ["486", "600", "729", "810"],
-        answer: "729",
-        difficulty: "easy"
-    },
-    {
-        question: "6   11   21   36   56   ?",
-        options: ["76", "80", "81", "86"],
-        answer: "81",
-        difficulty: "hard"
-    }
-];
-
-// CHALLENGE 5 VARIABLES
-
-const patternScreen =
-    document.getElementById("pattern-screen");
-
-const patternMessage =
-    document.getElementById("pattern-message");
-
-const patternDisplay =
-    document.getElementById("pattern-display");
-
-const patternOptions =
-    document.getElementById("pattern-options");
-
-const selectedPattern =
-    document.getElementById("selected-pattern");
-
-const patternTimer =
-    document.getElementById("pattern-timer");
-
-const patternSubmit =
-    document.getElementById("pattern-submit");
-
-const patternResultScreen =
-    document.getElementById("pattern-result-screen");
-
-// UNDO button for Challenge 5 (created here since it isn't in the HTML)
-const patternUndoBtn = document.createElement("button");
-patternUndoBtn.id = "pattern-undo-btn";
-patternUndoBtn.className = "undo-btn";
-patternUndoBtn.textContent = "UNDO";
-patternUndoBtn.style.display = "none";
-patternSubmit.insertAdjacentElement("afterend", patternUndoBtn);
-
-const patternResultMessage =
-    document.getElementById("pattern-result-message");
-
-const patternResultTime =
-    document.getElementById("pattern-result-time");
-
-const patternResultContinue =
-    document.getElementById("pattern-result-continue");
-
-let currentPatternQuestion = null;
-let patternAnswer = [];
-let patternStartTime = 0;
-let patternTimerInterval = null;
-
-const patternQuestions = [
-    {
-        pattern: ["▲", "■", "◆", "★", "■", "▲"],
-        options: ["▲", "■", "◆", "★", "●"]
-    },
-    {
-        pattern: ["●", "▼", "♥", "●", "▼", "■"],
-        options: ["●", "▼", "♥", "■", "★"]
-    },
-    {
-        pattern: ["★", "◆", "▲", "★", "◆", "▼"],
-        options: ["★", "◆", "▲", "▼", "●"]
-    },
-    {
-        pattern: ["■", "♥", "●", "■", "♥", "▲"],
-        options: ["■", "♥", "●", "▲", "◆"]
-    },
-    {
-        pattern: ["▼", "★", "◆", "▼", "★", "■"],
-        options: ["▼", "★", "◆", "■", "♥"]
-    },
-    {
-        pattern: ["●", "▲", "♥", "●", "▲", "★"],
-        options: ["●", "▲", "♥", "★", "■"]
-    },
-    {
-        pattern: ["◆", "■", "▼", "◆", "■", "♥"],
-        options: ["◆", "■", "▼", "♥", "▲"]
-    },
-    {
-        pattern: ["▲", "★", "●", "▲", "★", "◆"],
-        options: ["▲", "★", "●", "◆", "▼"]
-    },
-    {
-        pattern: ["♥", "▼", "■", "♥", "▼", "★"],
-        options: ["♥", "▼", "■", "★", "●"]
-    },
-    {
-        pattern: ["●", "◆", "▲", "●", "◆", "♥"],
-        options: ["●", "◆", "▲", "♥", "■"]
-    },
-    {
-        pattern: ["■", "▲", "★", "■", "▲", "♥"],
-        options: ["■", "▲", "★", "♥", "●"]
-    },
-    {
-        pattern: ["◆", "●", "▼", "◆", "●", "★"],
-        options: ["◆", "●", "▼", "★", "▲"]
-    },
-    {
-        pattern: ["▼", "♥", "▲", "▼", "♥", "◆"],
-        options: ["▼", "♥", "▲", "◆", "■"]
-    },
-    {
-        pattern: ["★", "■", "●", "★", "■", "▼"],
-        options: ["★", "■", "●", "▼", "♥"]
-    },
-    {
-        pattern: ["♥", "◆", "▲", "♥", "◆", "●"],
-        options: ["♥", "◆", "▲", "●", "★"]
-    },
-    {
-        pattern: ["▲", "▼", "■", "▲", "▼", "★"],
-        options: ["▲", "▼", "■", "★", "♥"]
-    },
-    {
-        pattern: ["●", "★", "♥", "●", "★", "▲"],
-        options: ["●", "★", "♥", "▲", "◆"]
-    },
-    {
-        pattern: ["◆", "▼", "●", "◆", "▼", "■"],
-        options: ["◆", "▼", "●", "■", "♥"]
-    },
-    {
-        pattern: ["■", "♥", "▼", "■", "♥", "●"],
-        options: ["■", "♥", "▼", "●", "▲"]
-    },
-    {
-        pattern: ["▲", "◆", "★", "▲", "◆", "♥"],
-        options: ["▲", "◆", "★", "♥", "●"]
-    }
-];
-
-// FINAL CHALLENGE VARIABLES
-
-const finalScreen =
-    document.getElementById("final-screen");
-
-const finalMessage =
-    document.getElementById("final-message");
-
-const finalTarget =
-    document.getElementById("final-target");
-
-const finalTimer =
-    document.getElementById("final-timer");
-
-const finalStart =
-    document.getElementById("final-start");
-
-const finalStop =
-    document.getElementById("final-stop");
-const restartGameBtn =
-    document.getElementById("restart-game-btn");
-
-const restartConfirm =
-    document.getElementById("restart-confirm");
-
-const restartConfirmBtn =
-    document.getElementById("restart-confirm-btn");
-
-const restartCancelBtn =
-    document.getElementById("restart-cancel-btn");
-
-let finalTargetTime = 10;
-let finalStartTime = 0;
-let finalTimerInterval = null;
-
-// LEADERBOARD VARIABLES
-
-const leaderboardScreen =
-    document.getElementById("leaderboard-screen");
-
-const leaderboardEntries =
-    document.getElementById("leaderboard-entries");
-
-const leaderboardBack =
-    document.getElementById("leaderboard-back");
-
-const startLeaderboardBtn =
-    document.getElementById("start-leaderboard-btn");
-
-// TEMPORARY LEADERBOARD DATA
-
-let leaderboardData = [
-    {
-        name: "Alex",
-        gender: "GIRL",
-        totalTime: 47.52,
-        accuracy: 0.01
-    },
-
-    {
-        name: "Ryan",
-        gender: "BOY",
-        totalTime: 48.17,
-        accuracy: 0.03
-    },
-
-    {
-        name: "Sam",
-        gender: "BOY",
-        totalTime: 49.04,
-        accuracy: 0.02
-    }
-];
 function escapeHtml(value) {
-
     return String(value)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -919,1431 +46,437 @@ function escapeHtml(value) {
         .replace(/'/g, "&#39;");
 }
 
-async function displayLeaderboard() {
+// ---------- ELEMENTS ----------
 
-    leaderboardEntries.innerHTML =
-        "<p style='text-align:center; padding:30px;'>LOADING...</p>";
+const screens = Array.from(document.querySelectorAll("#game > section"));
 
-    const { data, error } = await supabaseClient
-        .from("leaderboard")
-        .select("name, gender, total_time, accuracy")
-        .order("total_time", { ascending: true })
-        .order("accuracy", { ascending: true })
-        .limit(100);
+const restartGameBtn = $("restart-game-btn");
+const restartConfirm = $("restart-confirm");
 
-    if (error) {
+const psychoScreen = $("psycho-screen");
+const psychoText = $("psycho-text");
+const psychoName = $("psycho-name");
+const psychoNext = $("psycho-next");
+const psychoSkip = $("psycho-skip");
+const psychoActions = $("psycho-actions");
 
-        console.error(
-            "LEADERBOARD LOAD ERROR:",
-            error
-        );
+const finalMessage = $("final-message");
+const finalTarget = $("final-target");
+const finalTimer = $("final-timer");
+const finalStart = $("final-start");
+const finalStop = $("final-stop");
 
-        leaderboardEntries.innerHTML =
-            "<p style='text-align:center; padding:30px;'>FAILED TO LOAD LEADERBOARD</p>";
+// ---------- SCREENS ----------
 
+let topMode = null;   // "levels" | "menu" | null
+
+function setTopButton(mode) {
+
+    topMode = mode;
+
+    if (mode === null) {
+        restartGameBtn.style.display = "none";
         return;
     }
 
-    leaderboardEntries.innerHTML = "";
+    restartGameBtn.textContent = mode === "levels" ? "LEVELS" : "MENU";
+    restartGameBtn.style.display = "block";
+}
 
-    data.forEach(function(player, index) {
+function showScreen(id) {
 
-        const entry =
-            document.createElement("div");
-
-        entry.classList.add("leaderboard-entry");
-
-        entry.innerHTML = `
-            <span class="leaderboard-rank">
-                ${index + 1}
-            </span>
-
-            <span>
-                ${escapeHtml(player.name)}
-            </span>
-
-            <span>
-                ${escapeHtml(player.gender)}
-            </span>
-
-            <span class="leaderboard-time">
-                ${Number(player.total_time).toFixed(2)}s
-            </span>
-
-            <span class="leaderboard-accuracy">
-                ${Number(player.accuracy).toFixed(2)}s
-            </span>
-        `;
-
-        leaderboardEntries.appendChild(entry);
-
+    screens.forEach(function (screen) {
+        screen.style.display = screen.id === id ? "block" : "none";
     });
+
+    window.scrollTo(0, 0);
 }
 
-function openLeaderboard() {
+// =====================================================
+// SAVED PROGRESS (this device)
+// =====================================================
 
-    // Hide game screens
-    startScreen.style.display = "none";
-    memoryScreen.style.display = "none";
-    wordScreen.style.display = "none";
-    observationScreen.style.display = "none";
-    logicScreen.style.display = "none";
-    logicResultScreen.style.display = "none";
-    patternScreen.style.display = "none";
-    patternResultScreen.style.display = "none";
-    psychoScreen.style.display = "none";
-    finalScreen.style.display = "none";
+const SAVE_KEY = "lastSecond.save.v1";
 
-    // Hide restart button
-    restartGameBtn.style.display = "none";
-
-    // Show leaderboard
-    leaderboardScreen.style.display = "block";
-
-    displayLeaderboard();
+function emptySave() {
+    return {
+        name: "",
+        gender: "",
+        introSeen: false,
+        twistSeen: false,
+        levels: {},        // cleared: { time, missed? }
+        spent: {},         // seconds already spent on a level not yet cleared
+        finalDone: false,
+        finalAccuracy: null,
+        scoreSaved: false
+    };
 }
-leaderboardBack.addEventListener(
-    "click",
-    function() {
 
-        leaderboardScreen.style.display =
-            "none";
+function loadSave() {
 
-        startScreen.style.display =
-            "block";
+    try {
+        const raw = localStorage.getItem(SAVE_KEY);
 
+        if (!raw) return null;
+
+        const data = JSON.parse(raw);
+
+        if (!data || typeof data.name !== "string" || data.name === "") {
+            return null;
+        }
+
+        return Object.assign(emptySave(), data);
+
+    } catch (error) {
+        return null;
     }
-);
-startLeaderboardBtn.addEventListener(
-    "click",
-    function() {
-
-        startScreen.style.display = "none";
-
-        openLeaderboard();
-
-    }
-);
-const robotHuntScreen = document.getElementById("robot-hunt-screen");
-const robotArena = document.getElementById("robot-arena");
-const robotHuntTimer = document.getElementById("robot-hunt-timer");
-const robotHuntMessage = document.getElementById("robot-hunt-message");
-const robotRestartButton =
-    document.getElementById("robot-restart-btn");
-
-
-let robotHuntStartTime = 0;
-let robotHuntTimerInterval = null;
-let robotMoveTimeout = null;
-let robotHuntCount = 0;
-const ROBOTS_TO_HIT = 10;
-
-// CARD CHALLENGE
-const cardScreen =
-    document.getElementById("card-screen");
-
-const cardMessage =
-    document.getElementById("card-message");
-
-const cardStartButton =
-    document.getElementById("card-start-btn");
-
-const cardArena =
-    document.getElementById("card-arena");
-
-const cardTimer =
-    document.getElementById("card-timer");
-
-let cardStartTime = 0;
-let cardTimerInterval = null;
-let cardValues = ["♠", "♥", "♦", "♣"];
-let correctCardIndex = 0;
-let cardShuffleTimeout = null;
-
-// 9-DOT PATTERN CHALLENGE
-
-const pattern9Screen =
-    document.getElementById("pattern9-screen");
-
-const pattern9Message =
-    document.getElementById("pattern9-message");
-
-const pattern9Timer =
-    document.getElementById("pattern9-timer");
-
-const pattern9StartButton =
-    document.getElementById("pattern9-start-btn");
-
-const pattern9Dots =
-    document.querySelectorAll(".pattern-dot");
-
-let pattern9Target = [];
-let pattern9Player = [];
-
-let pattern9StartTime = 0;
-let pattern9TimerInterval = null;
-
-const PATTERN9_TIME_LIMIT = 5;
-
-// GRID CHALLENGE
-
-const gridScreen =
-    document.getElementById("grid-screen");
-
-const gridMessage =
-    document.getElementById("grid-message");
-
-const gridStartButton =
-    document.getElementById("grid-start-btn");
-
-const reactionGrid =
-    document.getElementById("reaction-grid");
-
-const gridTimer =
-    document.getElementById("grid-timer");
-
-const gridMisses =
-    document.getElementById("grid-misses");
-
-let gridStartTime = 0;
-let gridTimerInterval = null;
-let gridActiveSquare = null;
-let gridMissCount = 0;
-let gridRound = 0;
-
-const GRID_TOTAL_ROUNDS = 20;
-
-// TWO DOORS CHALLENGE
-
-const doorScreen =
-    document.getElementById("door-screen");
-
-const doorMessage =
-    document.getElementById("door-message");
-
-const doorQuestion =
-    document.getElementById("door-question");
-
-const doorLeft =
-    document.getElementById("door-left");
-
-const doorRight =
-    document.getElementById("door-right");
-
-const doorTimer =
-    document.getElementById("door-timer");
-
-const doorStartButton =
-    document.getElementById("door-start-btn");
-
-let doorStartTime = 0;
-let doorTimerInterval = null;
-let correctDoor = "";
-const doorQuestions = [
-    {
-        question: "A farmer has 17 sheep. All but 9 run away. How many are left?",
-        left: "8",
-        right: "9",
-        answer: "RIGHT"
-    },
-    {
-        question: "A clock takes 5 seconds to strike 6 times. How long does it take to strike 12 times?",
-        left: "10 seconds",
-        right: "11 seconds",
-        answer: "RIGHT"
-    },
-    {
-        question: "A number is doubled and then increased by 10. The result is 34. What was the number?",
-        left: "12",
-        right: "14",
-        answer: "LEFT"
-    },
-    {
-        question: "What comes next? 1, 11, 21, 1211, 111221, ...",
-        left: "312211",
-        right: "311221",
-        answer: "LEFT"
-    },
-    {
-        question: "A father is 4 times as old as his son. In 20 years, he will be twice as old. How old is the son now?",
-        left: "10",
-        right: "15",
-        answer: "LEFT"
-    },
-    {
-        question: "All Bloops are Razzies. All Razzies are Lazzies. Which must be true?",
-        left: "All Bloops are Lazzies",
-        right: "All Lazzies are Bloops",
-        answer: "LEFT"
-    },
-    {
-        question: "Five machines make five objects in five minutes. How long do 100 machines take to make 100 objects?",
-        left: "5 minutes",
-        right: "100 minutes",
-        answer: "LEFT"
-    },
-    {
-        question: "A room has four corners. A cat sits in each corner. Each cat sees three other cats. How many cats are there?",
-        left: "12",
-        right: "4",
-        answer: "RIGHT"
-    },
-    {
-        question: "A train travels 60 km in 45 minutes. At the same speed, how far does it travel in 2 hours?",
-        left: "160 km",
-        right: "150 km",
-        answer: "LEFT"
-    },
-    {
-        question: "You have 8 identical balls. One is heavier. Can you always find it using a balance scale only twice?",
-        left: "Yes",
-        right: "No",
-        answer: "RIGHT"
-    },
-    {
-        question: "If 3 pencils cost ₹15, how much do 8 pencils cost?",
-        left: "₹40",
-        right: "₹45",
-        answer: "LEFT"
-    },
-    {
-        question: "A sequence follows: 2, 6, 12, 20, 30, ?. What comes next?",
-        left: "40",
-        right: "42",
-        answer: "RIGHT"
-    },
-    {
-        question: "If yesterday was Monday, what day will it be 3 days after tomorrow?",
-        left: "Friday",
-        right: "Saturday",
-        answer: "RIGHT"
-    },
-    {
-        question: "A bat and ball cost ₹110 together. The bat costs ₹100 more than the ball. How much does the ball cost?",
-        left: "₹5",
-        right: "₹10",
-        answer: "LEFT"
-    },
-    {
-        question: "A number is divisible by both 3 and 4. Which number could it be?",
-        left: "18",
-        right: "24",
-        answer: "RIGHT"
-    },
-    {
-        question: "You have 10 candles. You blow out 3. How many candles remain?",
-        left: "3",
-        right: "10",
-        answer: "RIGHT"
-    },
-    {
-        question: "What comes next? 3, 8, 15, 24, 35, ?",
-        left: "48",
-        right: "50",
-        answer: "LEFT"
-    },
-    {
-        question: "A father and son have a combined age of 66. The father's age is the son's age reversed. What ages could they be?",
-        left: "51 and 15",
-        right: "42 and 24",
-        answer: "LEFT"
-    },
-    {
-        question: "If 5 workers finish a job in 12 days, how many days would 10 workers take at the same rate?",
-        left: "6 days",
-        right: "8 days",
-        answer: "LEFT"
-    },
-    {
-        question: "A box contains 6 red, 6 blue and 6 green balls. Without looking, what is the minimum number you must pick to guarantee two balls of the same colour?",
-        left: "4",
-        right: "5",
-        answer: "LEFT"
-    },
-    {
-        question: "A sequence follows: 81, 27, 9, 3, ?. What comes next?",
-        left: "1",
-        right: "0",
-        answer: "LEFT"
-    },
-    {
-        question: "There are 12 months. How many months have 28 days?",
-        left: "1",
-        right: "12",
-        answer: "RIGHT"
-    },
-    {
-        question: "A farmer has chickens and cows. There are 10 heads and 28 legs. How many cows are there?",
-        left: "4",
-        right: "6",
-        answer: "LEFT"
-    },
-    {
-        question: "What is the smallest positive number that is divisible by both 6 and 8?",
-        left: "24",
-        right: "48",
-        answer: "LEFT"
-    }
-];
-function startDoorChallenge() {
-
-    doorScreen.style.display = "block";
-
-    doorStartButton.style.display = "none";
-
-    document.querySelector(".door-instructions").style.display = "none";
-
-    doorLeft.style.display = "inline-block";
-    doorRight.style.display = "inline-block";
-
-    doorMessage.textContent =
-        "Choose the correct answer.";
-
-    doorTimer.textContent =
-        "TIME: 0.00";
-
-    // Pick a random question
-    const question =
-        doorQuestions[
-            Math.floor(Math.random() * doorQuestions.length)
-        ];
-
-    // Save the question for this attempt
-    window.currentDoorQuestion = question;
-
-    setupDoorAnswers(question);
-
-    doorStartTime = performance.now();
-
-    clearInterval(doorTimerInterval);
-
-    doorTimerInterval = setInterval(function() {
-
-        const elapsed =
-            (performance.now() - doorStartTime) / 1000;
-
-        doorTimer.textContent =
-            "TIME: " + elapsed.toFixed(2);
-
-    }, 10);
 }
-function setupDoorAnswers(question) {
 
-    // Randomly decide which physical door gets the correct answer
-    const correctOnLeft = Math.random() < 0.5;
+let save = loadSave();
 
-    if (correctOnLeft) {
+function persist() {
 
-        doorLeft.textContent = question.left;
-        doorRight.textContent = question.right;
+    try {
+        if (save) localStorage.setItem(SAVE_KEY, JSON.stringify(save));
+    } catch (error) { /* storage blocked: the game still works */ }
+}
 
-        correctDoor = "LEFT";
+function forgetPlayer() {
+
+    save = null;
+
+    try { localStorage.removeItem(SAVE_KEY); } catch (error) { /* ignore */ }
+}
+
+function isCleared(n) { return !!(save && save.levels[n]); }
+
+function isUnlocked(n) { return n === 1 || isCleared(n - 1); }
+
+function clearedCount() {
+
+    let count = 0;
+
+    for (let n = 1; n <= 5; n++) {
+        if (isCleared(n)) count++;
+    }
+
+    return count;
+}
+
+function allFiveCleared() { return clearedCount() === 5; }
+
+function totalTime() {
+
+    let sum = 0;
+
+    for (let n = 1; n <= 5; n++) {
+        if (isCleared(n)) sum += save.levels[n].time;
+    }
+
+    return sum;
+}
+
+function totalMissed() {
+    return isCleared(4) ? (save.levels[4].missed || 0) : 0;
+}
+
+// what the CONTINUE button should open: 1-5, 6 = final, 0 = all done
+function nextTarget() {
+
+    for (let n = 1; n <= 5; n++) {
+        if (!isCleared(n)) return n;
+    }
+
+    return save.finalDone ? 0 : 6;
+}
+
+// =====================================================
+// CONFIRM BOX (reset progress, new player)
+// =====================================================
+
+let confirmAction = null;
+
+function askConfirm(title, text, yesLabel, onYes) {
+
+    $("confirm-title").textContent = title;
+    $("confirm-text").textContent = text;
+    $("restart-confirm-btn").textContent = yesLabel;
+
+    confirmAction = onYes;
+
+    restartConfirm.style.display = "flex";
+
+    // The safe choice has the focus
+    $("restart-cancel-btn").focus();
+}
+
+$("restart-confirm-btn").addEventListener("click", function () {
+
+    const action = confirmAction;
+
+    confirmAction = null;
+
+    restartConfirm.style.display = "none";
+
+    if (action) action();
+});
+
+$("restart-cancel-btn").addEventListener("click", function () {
+
+    confirmAction = null;
+
+    restartConfirm.style.display = "none";
+});
+
+// =====================================================
+// TITLE, CHARACTER, NAME, SCHOOL, HALLWAY
+// =====================================================
+
+const DEFAULT_BRIEFING =
+    "Someone called you intelligent. Five challenges, each with " +
+    "its own clock. Your time is being recorded.";
+
+let pendingGender = "";
+
+function refreshStartScreen() {
+
+    if (save) {
+
+        $("start-btn-label").textContent = "CONTINUE";
+
+        $("new-player-btn").hidden = false;
+
+        $("briefing-text").textContent =
+            "Welcome back, " + save.name + ". " +
+            clearedCount() + " of 5 challenges cleared.";
 
     } else {
 
-        doorLeft.textContent = question.right;
-        doorRight.textContent = question.left;
+        $("start-btn-label").textContent = "START GAME";
 
-        correctDoor = "RIGHT";
-    }
+        $("new-player-btn").hidden = true;
 
-    doorQuestion.textContent =
-        question.question;
-}
-function chooseDoor(side) {
-
-    doorLeft.disabled = true;
-    doorRight.disabled = true;
-
-    clearInterval(doorTimerInterval);
-    
-    if (side === correctDoor) {
-        level2DoorTime =
-    (performance.now() - doorStartTime) / 1000;
-        const level1Total =
-        memoryTime +
-        wordTime +
-        observationTime +
-        logicTime +
-        patternTime;
-
-    const level2Total =
-        level2RobotTime +
-        level2CardTime +
-        level2PatternTime +
-        level2DoorTime;
-
-    totalChallengeTime =
-        level1Total + level2Total;
-
-    doorMessage.textContent =
-        "LEVEL 2 COMPLETE.";
-
-    doorQuestion.textContent =
-        "YOU SURVIVED THE HUNT.";
-
-    doorLeft.style.display = "none";
-    doorRight.style.display = "none";
-
-    console.log("LEVEL 2 COMPLETE");
-
-    setTimeout(function() {
-
-    const combinedAccuracy =
-        level2Misses + finalAccuracy;
-
-    saveLeaderboardScore();
-
-    doorMessage.textContent =
-        "ALL FIVE CHALLENGES COMPLETED.";
-
-    console.log(
-        "FINAL SCORE:",
-        totalChallengeTime.toFixed(2),
-        "seconds"
-    );
-
-    console.log(
-        "FINAL ACCURACY:",
-        combinedAccuracy.toFixed(2)
-    );
-
-    setTimeout(function() {
-        openLeaderboard();
-    }, 1500);
-
-}, 1500);
-} else {
-
-        doorMessage.textContent =
-            "WRONG DOOR. LEVEL 2 FAILED.";
-
-        console.log("DOOR CHALLENGE FAILED");
-
-        setTimeout(function() {
-            restartLevel2();
-        }, 1200);
+        $("briefing-text").textContent = DEFAULT_BRIEFING;
     }
 }
-doorLeft.addEventListener("click", function() {
-    chooseDoor("LEFT");
-});
 
-doorRight.addEventListener("click", function() {
-    chooseDoor("RIGHT");
-});
-doorStartButton.addEventListener("click", function() {
-    startDoorChallenge();
-});
+function goTitle() {
 
+    stopLevel();
 
-function createReactionGrid() {
-    reactionGrid.innerHTML = "";
+    clearInterval(finalTimerInterval);
 
-    for (let i = 0; i < 25; i++) {
+    showScreen("start-screen");
 
-        const square = document.createElement("button");
+    setTopButton(null);
 
-        square.className = "grid-square";
-        square.dataset.index = i;
-
-        square.addEventListener("click", function() {
-            handleGridClick(square);
-        });
-
-        reactionGrid.appendChild(square);
-    }
+    refreshStartScreen();
 }
-let gridMoveTimeout = null;
 
-function showNextGridSquare() {
-    const squares = document.querySelectorAll(".grid-square");
+$("start-btn").addEventListener("click", function () {
 
-    squares.forEach(function(square) {
-        square.classList.remove("active");
-    });
-
-    const randomIndex = Math.floor(Math.random() * squares.length);
-    gridActiveSquare = randomIndex;
-
-    squares[randomIndex].classList.add("active");
-
-    const speed = Math.max(100, 500 - (gridRound * 20));
-
-    clearTimeout(gridMoveTimeout);
-
-    gridMoveTimeout = setTimeout(function() {
-        if (gridRound < GRID_TOTAL_ROUNDS) {
-            showNextGridSquare();
-        }
-    }, speed);
-}
-function handleGridClick(square) {
-
-    const clickedIndex =
-        Number(square.dataset.index);
-
-    // Correct square
-    if (clickedIndex === gridActiveSquare) {
-
-        gridRound++;
-
-        // Challenge complete
-        if (gridRound >= GRID_TOTAL_ROUNDS) {
-
-            clearInterval(gridTimerInterval);
-            level2Misses = gridMissCount;
-
-            document.querySelectorAll(".grid-square")
-                .forEach(function(square) {
-                    square.classList.remove("active");
-                });
-
-            gridMessage.textContent =
-                "GRID COMPLETE.";
-
-            console.log(
-                "GRID COMPLETE | MISSES:",
-                gridMissCount
-            );
-
-            setTimeout(function() {
-
-    gridScreen.style.display = "none";
-
-    doorScreen.style.display = "block";
-
-    doorStartButton.style.display = "inline-block";
-
-    doorMessage.textContent =
-        "Answer the question and choose the correct door.";
-
-    doorTimer.textContent =
-        "TIME: 0.00";
-
-}, 1200);
-
-return;
-        }
-
-        // Wait for the current speed cycle
+    if (save) {
+        openLevels();
         return;
     }
 
-    // Wrong square
-    gridMissCount++;
+    showScreen("character-screen");
+});
 
-gridMisses.textContent =
-    "MISSES: " + gridMissCount;
+$("new-player-btn").addEventListener("click", function () {
 
-if (gridMissCount > 2) {
-
-    clearInterval(gridTimerInterval);
-    clearTimeout(gridMoveTimeout);
-
-    document.querySelectorAll(".grid-square")
-        .forEach(function(square) {
-            square.classList.remove("active");
-        });
-
-    gridMessage.textContent =
-        "TOO MANY MISSES. LEVEL 2 FAILED.";
-
-    console.log(
-        "GRID FAILED | MISSES:",
-        gridMissCount
+    askConfirm(
+        "NEW PLAYER?",
+        "This removes " + save.name + "'s saved progress from this device.",
+        "YES, START OVER",
+        function () {
+            forgetPlayer();
+            refreshStartScreen();
+            showScreen("character-screen");
+        }
     );
-
-    setTimeout(function() {
-        restartLevel2();
-    }, 1200);
-}
-}
-function startGridChallenge() {
-
-    gridScreen.style.display = "block";
-
-    gridStartButton.style.display = "none";
-
-    document.querySelector(".grid-instructions").style.display = "none";
-
-    gridMessage.textContent =
-        "Hit the glowing square.";
-
-    gridTimer.textContent =
-        "TIME: 0.00";
-
-    gridMissCount = 0;
-    gridRound = 0;
-    gridMisses.textContent = "MISSES: 0";
-
-    createReactionGrid();
-
-    gridStartTime = performance.now();
-
-    clearInterval(gridTimerInterval);
-
-    gridTimerInterval = setInterval(function() {
-
-        const elapsed =
-            (performance.now() - gridStartTime) / 1000;
-
-        gridTimer.textContent =
-            "TIME: " + elapsed.toFixed(2);
-
-    }, 10);
-
-    showNextGridSquare();
-}
-gridStartButton.addEventListener("click", function() {
-    startGridChallenge();
 });
 
-function generatePattern9() {
-
-    const allDots = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-    // Shuffle the dots
-    allDots.sort(function() {
-        return Math.random() - 0.5;
-    });
-
-    // Use 5 dots for the pattern
-    pattern9Target = allDots.slice(0, 5);
-
-    pattern9Player = [];
-
-    console.log("PATTERN:", pattern9Target);
-}
-function startPattern9Challenge() {
-
-    pattern9Screen.style.display = "block";
-
-    pattern9StartButton.style.display = "none";
-    document.querySelector(".pattern9-instructions").style.display = "none";
-
-    pattern9Message.textContent =
-        "Memorize the pattern.";
-
-    pattern9Timer.textContent =
-        "TIME: 0.00";
-
-    pattern9Dots.forEach(function(dot) {
-        dot.classList.remove("active");
-        dot.classList.remove("selected");
-    });
-
-    generatePattern9();
-
-    showPattern9();
-}
-pattern9StartButton.addEventListener("click", function() {
-
-    startPattern9Challenge();
-
-});
-function showPattern9() {
-
-    pattern9Target.forEach(function(dotNumber, index) {
-
-        setTimeout(function() {
-
-            const dot =
-                document.querySelector(
-                    '.pattern-dot[data-dot="' +
-                    dotNumber +
-                    '"]'
-                );
-
-            dot.classList.add("active");
-
-            setTimeout(function() {
-                dot.classList.remove("active");
-            }, 350);
-
-        }, index * 400);
-
-    });
-
-    setTimeout(function() {
-
-        pattern9Message.textContent =
-            "NOW RECREATE THE PATTERN.";
-
-        startPattern9Timer();
-
-    }, pattern9Target.length * 400 + 500);
-}
-function startPattern9Timer() {
-
-    pattern9StartTime = performance.now();
-
-    clearInterval(pattern9TimerInterval);
-
-    pattern9TimerInterval = setInterval(function() {
-
-        const elapsed =
-            (performance.now() - pattern9StartTime) / 1000;
-
-        pattern9Timer.textContent =
-            "TIME: " + elapsed.toFixed(2);
-
-        if (elapsed >= PATTERN9_TIME_LIMIT) {
-
-            clearInterval(pattern9TimerInterval);
-
-            pattern9Message.textContent =
-                "TIME'S UP. LEVEL 2 FAILED.";
-
-            setTimeout(function() {
-                restartLevel2();
-            }, 1200);
-        }
-
-    }, 10);
-}
-pattern9Dots.forEach(function(dot) {
-
-    dot.addEventListener("click", function() {
-
-        if (pattern9Player.length >= pattern9Target.length) {
-            return;
-        }
-
-        const dotNumber =
-            Number(dot.dataset.dot);
-
-        pattern9Player.push(dotNumber);
-
-        dot.classList.add("selected");
-
-        const currentIndex =
-            pattern9Player.length - 1;
-
-        // Check immediately
-        if (
-            dotNumber !==
-            pattern9Target[currentIndex]
-        ) {
-
-            clearInterval(pattern9TimerInterval);
-
-            pattern9Message.textContent =
-                "WRONG PATTERN. LEVEL 2 FAILED.";
-
-            pattern9Dots.forEach(function(d) {
-                d.disabled = true;
-            });
-
-            setTimeout(function() {
-                restartLevel2();
-            }, 1200);
-
-            return;
-        }
-
-        // Pattern completed correctly
-        if (
-            pattern9Player.length ===
-            pattern9Target.length
-        ) {
-
-            clearInterval(pattern9TimerInterval);
-            level2PatternTime =
-    (performance.now() - pattern9StartTime) / 1000;
-
-            pattern9Message.textContent =
-                "PATTERN COMPLETE.";
-
-            pattern9Dots.forEach(function(d) {
-    d.disabled = true;
+$("boy-btn").addEventListener("click", function () {
+    pendingGender = "boy";
+    showScreen("name-screen");
+    $("player-name").focus();
 });
 
-console.log(
-    "PATTERN 9 COMPLETE:",
-    pattern9Player
-);
-
-setTimeout(function() {
-    pattern9Screen.style.display = "none";
-    gridScreen.style.display = "block";
-    gridStartButton.style.display = "inline-block";
-    gridMessage.textContent = "Hit the glowing square.";
-    gridTimer.textContent = "TIME: 0.00";
-    gridMisses.textContent = "MISSES: 0";
-}, 1200);
-        }
-
-    });
-
+$("girl-btn").addEventListener("click", function () {
+    pendingGender = "girl";
+    showScreen("name-screen");
+    $("player-name").focus();
 });
 
-function startCardChallenge() {
+$("continue-btn").addEventListener("click", function () {
 
-    cardScreen.style.display = "block";
+    const name = $("player-name").value.trim();
 
-    cardStartButton.style.display = "none";
-    document.querySelector(".card-instructions").style.display = "none";
-    cardArena.innerHTML = "";
-
-    cardMessage.textContent =
-        "Memorize the card.";
-
-    cardTimer.textContent =
-        "TIME: 0.00";
-
-    createCards();
-
-}
-cardStartButton.addEventListener("click", function() {
-
-    cardStartButton.style.display = "none";
-
-    startCardChallenge();
-
-});
-function createCards() {
-
-    cardArena.innerHTML = "";
-
-    const targetValue =
-        cardValues[Math.floor(Math.random() * cardValues.length)];
-
-    correctCardIndex =
-        cardValues.indexOf(targetValue);
-
-    // Create all 4 cards
-    cardValues.forEach(function(value, index) {
-
-        const card = document.createElement("button");
-
-        card.className = "playing-card";
-        card.dataset.value = value;
-        card.dataset.index = index;
-        card.disabled = true;
-
-        card.innerHTML = `
-            <span class="card-front">${value}</span>
-            <span class="card-back">?</span>
-        `;
-
-        cardArena.appendChild(card);
-    });
-
-    const cards =
-        Array.from(document.querySelectorAll(".playing-card"));
-
-    // Hide all cards initially
-    cards.forEach(function(card) {
-        card.style.display = "none";
-    });
-
-    // Show ONLY the target card
-    const targetCard = cards[correctCardIndex];
-
-    targetCard.style.display = "block";
-    targetCard.style.left = "225px";
-    targetCard.classList.add("flipped");
-
-    cardMessage.textContent =
-        "MEMORIZE THIS CARD: " + targetValue;
-
-    // Give the player 2 seconds to memorize it
-    setTimeout(function() {
-
-        // Flip target face-down
-        targetCard.classList.remove("flipped");
-
-        cardMessage.textContent =
-            "GET READY...";
-
-        setTimeout(function() {
-
-            // Show all cards
-            cards.forEach(function(card, index) {
-
-                card.style.display = "block";
-                card.style.left =
-                    [0, 145, 290, 435][index] + "px";
-
-            });
-
-            cardMessage.textContent =
-                "FOLLOW THE CARD...";
-
-            // Now start the actual shuffle
-            setTimeout(function() {
-                shuffleCards();
-            }, 500);
-
-        }, 500);
-
-    }, 2000);
-}
-function flipCards() {
-
-    const cards = document.querySelectorAll(".playing-card");
-
-    cards.forEach(function(card) {
-        card.classList.add("flipped");
-    });
-
-    cardMessage.textContent = "Watch carefully...";
-
-    setTimeout(function() {
-        shuffleCards();
-    }, 800);
-}
-
-function shuffleCards() {
-
-    const cards = Array.from(
-        document.querySelectorAll(".playing-card")
-    );
-
-    const positions = [0, 145, 290, 435];
-
-    // Put cards in their starting positions
-    cards.forEach(function(card, index) {
-        card.style.left = positions[index] + "px";
-        card.disabled = true;
-    });
-
-    cardMessage.textContent =
-        "FOLLOW THE CARD...";
-
-    let shuffleCount = 0;
-
-    function doShuffle() {
-
-        if (shuffleCount >= 12) {
-
-            cardMessage.textContent =
-                "WHICH CARD WAS IT?";
-
-            // Start timer ONLY after shuffle
-            cardStartTime = performance.now();
-
-            clearInterval(cardTimerInterval);
-
-            cardTimerInterval = setInterval(function() {
-
-                const elapsed =
-                    (performance.now() - cardStartTime) / 1000;
-
-                cardTimer.textContent =
-                    "TIME: " + elapsed.toFixed(2);
-
-            }, 10);
-
-            enableCardSelection();
-
-            return;
-        }
-
-        let first =
-            Math.floor(Math.random() * cards.length);
-
-        let second =
-            Math.floor(Math.random() * cards.length);
-
-        while (second === first) {
-            second =
-                Math.floor(Math.random() * cards.length);
-        }
-
-        // Get current positions
-        const firstLeft =
-            parseInt(cards[first].style.left);
-
-        const secondLeft =
-            parseInt(cards[second].style.left);
-
-        // Visually move the cards
-        cards[first].style.left =
-            secondLeft + "px";
-
-        cards[second].style.left =
-            firstLeft + "px";
-
-        // Swap their stored positions
-        const temp = cards[first];
-        cards[first] = cards[second];
-        cards[second] = temp;
-
-        shuffleCount++;
-
-        setTimeout(doShuffle, 350);
+    if (name === "") {
+        $("name-error").textContent = "Please enter your name.";
+        return;
     }
 
-    setTimeout(doShuffle, 500);
-}
+    $("name-error").textContent = "";
 
-function enableCardSelection() {
+    save = emptySave();
+    save.name = name;
+    save.gender = pendingGender || "boy";
+    persist();
 
-    const cards = document.querySelectorAll(".playing-card");
-
-    cards.forEach(function(card) {
-
-        card.disabled = false;
-
-        card.onclick = function() {
-
-            // Stop the player from selecting another card
-            cards.forEach(function(c) {
-                c.disabled = true;
-            });
-
-            // Reveal selected card
-            card.classList.add("flipped");
-
-            cardMessage.textContent =
-                "CHECKING...";
-
-            setTimeout(function() {
-
-                if (card.dataset.value === cardValues[correctCardIndex]) {
-
-    clearInterval(cardTimerInterval);
-    level2CardTime =
-    (performance.now() - cardStartTime) / 1000;
-
-    cardMessage.textContent =
-        "CORRECT! YOU FOUND IT.";
-
-    console.log("CARD CHALLENGE PASSED");
-
-    setTimeout(function() {
-
-        cardScreen.style.display = "none";
-
-        pattern9Screen.style.display = "block";
-
-        pattern9StartButton.style.display =
-            "inline-block";
-
-        pattern9Message.textContent =
-            "Memorize the pattern.";
-
-        pattern9Timer.textContent =
-            "TIME: 0.00";
-
-    }, 1200);
-
-                } else {
-
-                    clearInterval(cardTimerInterval);
-
-                    cardMessage.textContent =
-                        "WRONG CARD. LEVEL 2 FAILED.";
-
-                    console.log("CARD CHALLENGE FAILED");
-
-                    setTimeout(function() {
-                        restartLevel2();
-                    }, 1500);
-                }
-
-            }, 700);
-        };
-    });
-}
-function restartLevel2() {
-
-    clearInterval(robotHuntTimerInterval);
-    clearTimeout(robotMoveTimeout);
-    clearInterval(gridTimerInterval);
-
-    robotArena.innerHTML = "";
-
-    level2Screen.style.display = "none";
-    robotHuntScreen.style.display = "block";
-
-    robotHuntMessage.textContent =
-        "LEVEL 2 FAILED. READY TO RESTART?";
-
-    robotRestartButton.style.display = "inline-block";
-}
-robotRestartButton.addEventListener("click", function() {
-
-    restartLevel2();
-
+    showScreen("school-screen");
 });
 
-function startLevel2() {
-
-    level2Screen.style.display = "block";
-    robotHuntScreen.style.display = "none";
-
-    level2StartButton.style.display = "inline-block";
-
-}
-level2StartButton.addEventListener("click", function() {
-
-    level2Screen.style.display = "none";
-    robotHuntScreen.style.display = "block";
-
-    startRobotHunt();
-
+$("enter-school-btn").addEventListener("click", function () {
+    showScreen("hallway-screen");
 });
-function startRobotHunt() {
 
-    robotHuntScreen.style.display = "block";
+$("hallway-continue").addEventListener("click", function () {
 
-    robotHuntCount = 0;
-    robotArena.innerHTML = "";
-    robotHuntMessage.textContent = "Shoot every robot before it disappears.";
+    if (save && !save.introSeen) {
 
-    robotHuntStartTime = performance.now();
+        showScreen("psycho-screen");
 
-    clearInterval(robotHuntTimerInterval);
+        startPsychoDialogue();
 
-    robotHuntTimerInterval = setInterval(function () {
-        const elapsed =
-            (performance.now() - robotHuntStartTime) / 1000;
+    } else {
 
-        robotHuntTimer.textContent =
-            "TIME: " + elapsed.toFixed(2);
-    }, 10);
+        openLevels();
+    }
+});
 
-    showRobot();
-}
-function showRobot() {
+// =====================================================
+// PSYCHO DIALOGUE
+// =====================================================
 
-    robotArena.innerHTML = "";
-
-    const robot = document.createElement("div");
-
-    robot.className = "robot-target";
-    robot.textContent = "🤖";
-
-    const maxX = robotArena.clientWidth - 55;
-    const maxY = robotArena.clientHeight - 55;
-
-    robot.style.left = Math.random() * maxX + "px";
-    robot.style.top = Math.random() * maxY + "px";
-
-    robotArena.appendChild(robot);
-
-    robotMoveTimeout = setTimeout(function () {
-
-    clearInterval(robotHuntTimerInterval);
-
-    robotArena.innerHTML = "";
-
-    robotHuntMessage.textContent =
-        "YOU MISSED. LEVEL 2 FAILED.";
-
-    robotRestartButton.style.display = "inline-block";
-
-}, 1000);
-
-    robot.addEventListener("click", function () {
-
-        clearTimeout(robotMoveTimeout);
-
-        robotHuntCount++;
-
-        
-        if (robotHuntCount >= ROBOTS_TO_HIT) {
-    clearInterval(robotHuntTimerInterval);
-    level2RobotTime =
-    (performance.now() - robotHuntStartTime) / 1000;
-
-    robotHuntMessage.textContent =
-        "ROBOT HUNT COMPLETE.";
-
-    setTimeout(function() {
-        robotHuntScreen.style.display = "none";
-        cardScreen.style.display = "block";
-
-        cardStartButton.style.display = "inline-block";
-        cardArena.innerHTML = "";
-
-        cardMessage.textContent =
-            "Watch the card carefully.";
-        cardTimer.textContent =
-            "TIME: 0.00";
-    }, 1200);
-
-    return;
-}
-        showRobot();
-    });
-}
-// =========================
-// PLAYER SCORE
-// =========================
-
-let memoryTime = 0;
-let wordTime = 0;
-let observationTime = 0;
-let logicTime = 0;
-let patternTime = 0;
-
-let level2RobotTime = 0;
-let level2CardTime = 0;
-let level2PatternTime = 0;
-let level2DoorTime = 0;
-let level2Misses = 0;
-
-let finalAccuracy = 0;
-let totalChallengeTime = 0;
-
-// ---------- PLAYER DATA ----------
-
-let playerGender = "";
-let playerName = "";
 let dialogues = [];
 let dialogueIndex = 0;
-
-
-// ---------- START GAME ----------
-
-startButton.addEventListener("click", function () {
-    resetPlayerScore();
-    
-
-    startScreen.style.display = "none";
-
-    characterScreen.style.display = "block";
-
-});
-
-
-// ---------- BOY ----------
-
-boyButton.addEventListener("click", function () {
-
-    playerGender = "boy";
-
-    characterScreen.style.display = "none";
-
-    nameScreen.style.display = "block";
-
-    nameInput.focus();
-
-});
-
-
-// ---------- GIRL ----------
-
-girlButton.addEventListener("click", function () {
-
-    playerGender = "girl";
-
-    characterScreen.style.display = "none";
-
-    nameScreen.style.display = "block";
-
-    nameInput.focus();
-
-});
-
-
-// ---------- NAME ----------
-
-continueButton.addEventListener("click", function () {
-
-    playerName = nameInput.value.trim();
-
-    if (playerName === "") {
-
-        nameError.textContent = "Please enter your name.";
-
-        return;
-
-    }
-
-    nameError.textContent = "";
-
-    nameScreen.style.display = "none";
-
-    schoolScreen.style.display = "block";
-
-});
-
-
-// ---------- ENTER SCHOOL ----------
-
-enterSchoolButton.addEventListener("click", function () {
-
-    schoolScreen.style.display = "none";
-
-    hallwayScreen.style.display = "block";
-
-});
-
-
-// ---------- HALLWAY ----------
-
-hallwayContinue.addEventListener("click", function () {
-
-    hallwayScreen.style.display = "none";
-
-    levelSelectScreen.style.display = "block";
-
-    updateLevelSelect();
-
-});
-
-
-// ---------- PSYCHO DIALOGUE ----------
+let dialogueTyping = null;
+let psychoMode = "intro";   // "intro" | "twist" | "ending"
 
 function startPsychoDialogue() {
 
-    if (playerName === "") {
-        playerName = "Stranger";
-    }
+    psychoMode = "intro";
+
+    setTopButton(null);
 
     psychoName.textContent = "PSYCHO";
 
-    // All Psycho dialogue
     dialogues = [
-
-        "Good evening, " + playerName + ".",
-
+        "Good evening, " + (save ? save.name : "Stranger") + ".",
         "Do you know why you're here?",
-
         "You were chosen because someone called you intelligent.",
-
         "But intelligence is easy to measure.",
-
         "Let's see how useful it really is.",
-
         "There will be five challenges.",
-
         "Every challenge will have its own clock.",
-
         "Your time will be recorded.",
-
         "Finish all five challenges...",
-
         "and you will be free."
-
     ];
 
     dialogueIndex = 0;
 
     showDialogue(dialogues[dialogueIndex]);
 }
-let dialogueTyping = null;
-// Psycho button: the last line of the opening dialogue starts Challenge 01
+
+function startTwistDialogue() {
+
+    psychoMode = "twist";
+
+    showScreen("psycho-screen");
+
+    setTopButton(null);
+
+    psychoName.textContent = "PSYCHO";
+
+    dialogues = [
+        "You made it.",
+        "All five challenges.",
+        "You probably thought this was the end.",
+        "I told you the first person to finish would be released.",
+        "That was the first lie.",
+        "There was never a first place.",
+        "There was never a second place.",
+        "There was only one final test.",
+        "And this one isn't about intelligence.",
+        "It's about time.",
+        "Let's see how well you can control it."
+    ];
+
+    dialogueIndex = 0;
+
+    showDialogue(dialogues[dialogueIndex]);
+}
+
+function startLoseEnding() {
+
+    psychoMode = "ending";
+
+    showScreen("psycho-screen");
+
+    setTopButton(null);
+
+    psychoName.textContent = "PSYCHO";
+
+    dialogues = [
+        "You missed.",
+        "But... I understand.",
+        "You know what that feels like, don't you?",
+        "Being almost good enough.",
+        "Being a little too slow.",
+        "They used to laugh at me for the same thing.",
+        "They called me useless.",
+        "Maybe that's why I chose you.",
+        "Because you're like me.",
+        "Maybe you were never supposed to win."
+    ];
+
+    dialogueIndex = 0;
+
+    showDialogue(dialogues[dialogueIndex]);
+}
+
+function startWinEnding() {
+
+    psychoMode = "ending";
+
+    showScreen("psycho-screen");
+
+    setTopButton(null);
+
+    psychoName.textContent = "PSYCHO";
+
+    dialogues = [
+        "You did it.",
+        "You actually hit the target.",
+        "Perfect.",
+        "Do you know what I hate about people like you?",
+        "You make it look easy.",
+        "You succeed where I failed.",
+        "You remind me of everything I could never become.",
+        "I don't want to watch you walk away.",
+        "So congratulations.",
+        "You won the game.",
+        "But you don't get to leave."
+    ];
+
+    dialogueIndex = 0;
+
+    showDialogue(dialogues[dialogueIndex]);
+}
+
+// The last line of the opening scene opens the board
 function updatePsychoButton() {
 
-    const isIntro =
-        psychoScreen.dataset.ending !== "true" &&
-        psychoScreen.dataset.twist !== "true";
+    const isIntro = psychoMode === "intro";
 
     const isLastLine = dialogueIndex === dialogues.length - 1;
 
-    if (isIntro && isLastLine) {
-        psychoNext.textContent = "START CHALLENGE 01";
-    } else {
-        psychoNext.textContent = "CONTINUE";
-    }
+    psychoNext.textContent =
+        isIntro && isLastLine ? "OPEN THE BOARD" : "CONTINUE";
 
-    // Last line of the opening scene: one button, centred
     psychoActions.classList.toggle("centered", isIntro && isLastLine);
 
     // Nothing left to skip on the last line
@@ -2365,7 +498,7 @@ function showDialogue(dialogue) {
 
     let index = 0;
 
-    dialogueTyping = setInterval(function() {
+    dialogueTyping = setInterval(function () {
 
         psychoText.textContent += dialogue[index];
 
@@ -2378,13 +511,10 @@ function showDialogue(dialogue) {
             dialogueTyping = null;
 
             psychoNext.classList.add("visible");
-
         }
 
     }, 45);
 }
-
-// ---------- FAST-FORWARD PSYCHO ----------
 
 // Show the whole current line at once
 function finishDialogueTyping() {
@@ -2426,7 +556,7 @@ psychoSkip.addEventListener("click", skipDialogueScene);
 // Tap / click the box while a line is typing to show it instantly
 document.querySelector(".psycho-dialogue").addEventListener(
     "click",
-    function(event) {
+    function (event) {
 
         if (event.target.closest("button")) return;
 
@@ -2434,8 +564,7 @@ document.querySelector(".psycho-dialogue").addEventListener(
     }
 );
 
-// ---------- NEXT DIALOGUE ----------
-psychoNext.addEventListener("click", function() {
+psychoNext.addEventListener("click", function () {
 
     dialogueIndex++;
 
@@ -2443,1287 +572,1705 @@ psychoNext.addEventListener("click", function() {
 
         showDialogue(dialogues[dialogueIndex]);
 
+        return;
+    }
+
+    if (psychoMode === "ending") {
+
+        openLeaderboard();
+
+    } else if (psychoMode === "twist") {
+
+        save.twistSeen = true;
+        persist();
+
+        startFinalChallenge();
+
     } else {
 
-        psychoScreen.style.display = "none";
+        save.introSeen = true;
+        persist();
 
-        if (psychoScreen.dataset.ending === "true") {
-
-            psychoScreen.dataset.ending = "false";
-
-            openLeaderboard();
-
-        } else if (psychoScreen.dataset.twist === "true") {
-
-            psychoScreen.dataset.twist = "false";
-
-            startFinalChallenge();
-
-        } else {
-
-            startMemoryChallenge();
-
-        }
-
+        openLevels();
     }
-
 });
 
-function startMemoryChallenge() {
-    restartGameBtn.style.display = "block";
+// =====================================================
+// THE BOARD (level select)
+// =====================================================
 
-    memoryScreen.style.display = "block";
+const LEVELS = [
+    { n: 1, name: "ROBOTS", screen: "robots-screen" },
+    { n: 2, name: "CARDS", screen: "cards-screen" },
+    { n: 3, name: "PATTERN LOCK", screen: "lock-screen" },
+    { n: 4, name: "REFLEX", screen: "grid-screen" },
+    { n: 5, name: "TWO DOORS", screen: "doors-screen" }
+];
 
-    // Choose a random question only when the challenge starts.
-    // Every entry in memoryQuestions is a 6-symbol sequence.
-    const randomIndex =
-        Math.floor(Math.random() * memoryQuestions.length);
+const TILTS = [-2.2, 1.6, -1.2, 2, -1.8, 1];
 
-    memoryQuestion = memoryQuestions[randomIndex];
-
-    // Clear previous answer
-    playerAnswer = [];
-    selectedSequence.textContent = "";
-
-    memoryMessage.textContent =
-        "Remember the sequence.";
-
-    memoryOptions.innerHTML = "";
-    memorySequence.textContent =
-        memoryQuestion.join(" ");
-
-    memorySubmit.style.display = "none";
-    memoryUndoBtn.style.display = "none";
-
-    // Challenge timer starts
-
-    let countdown = MEMORIZE_SECONDS;
-
-    memoryTimer.textContent =
-        "MEMORIZE: " + countdown;
-
-    clearInterval(memoryTimerInterval);
-
-    memoryTimerInterval = setInterval(function () {
-
-        countdown--;
-        if (countdown > 0) {
-
-    memoryTimer.textContent =
-        "MEMORIZE: " + countdown;
-
-} else {
-
-    clearInterval(memoryTimerInterval);
-
-    memorySequence.textContent = "";
-
-    memoryMessage.textContent =
-        "Recreate the sequence.";
-
-    memoryTimer.textContent =
-        "YOUR TURN";
-
-    // Timer starts only when the player can answer
-    memoryStartTime = performance.now();
-
-    showMemoryOptions();
-
-    memorySubmit.style.display = "block";
-}
-        
-
-    }, 1000);
+function levelNote(text) {
+    $("levels-note").textContent = text;
 }
 
+function cardHtml(label, name, state, meta) {
 
-// Maps each emoji symbol to its button for this round, so UNDO can
-// find and deselect the right one.
-let memorySymbolButtons = {};
+    const stateText =
+        state === "locked" ? "LOCKED" :
+        state === "cleared" ? "CLEARED" : "READY";
 
-function updateSelectedSequence() {
-
-    selectedSequence.textContent =
-        playerAnswer.join(" ");
+    return (
+        '<i class="pin"></i>' +
+        '<span class="level-no">' + label + '</span>' +
+        '<span class="level-name">' + name + '</span>' +
+        '<span class="level-state">' + stateText + '</span>' +
+        '<span class="level-meta">' + meta + '</span>'
+    );
 }
 
-function showMemoryOptions() {
+function renderLevels() {
 
-    memorySymbolButtons = {};
+    const board = $("levels-board");
 
-    const allSymbols = [
-        "🔑", "🕯️", "📕", "⏰", "🌹",
-        "🎲", "🧸", "🔔", "📷", "🍎",
-        "🌙", "🎸"
-    ];
+    board.innerHTML = "";
 
-    // Randomize the buttons
-    allSymbols.sort(() => Math.random() - 0.5);
+    LEVELS.forEach(function (level, index) {
 
-    allSymbols.forEach(function(symbol) {
+        const state = isCleared(level.n) ? "cleared" :
+            isUnlocked(level.n) ? "open" : "locked";
 
-        const button = document.createElement("button");
+        let meta = "&nbsp;";
 
-        button.textContent = symbol;
-        button.classList.add("memory-option");
+        if (state === "cleared") {
 
-        memorySymbolButtons[symbol] = button;
+            const record = save.levels[level.n];
 
-        button.addEventListener("click", function() {
+            meta = record.time.toFixed(2) + "s";
 
-    // If already selected, deselect it
-    if (button.classList.contains("selected")) {
+            if (level.n === 4) meta += " &middot; " + (record.missed || 0) + " missed";
 
-        const index = playerAnswer.indexOf(symbol);
+        } else if (state === "open" && save.spent[level.n]) {
 
-        if (index !== -1) {
-            playerAnswer.splice(index, 1);
+            meta = save.spent[level.n].toFixed(1) + "s so far";
         }
 
-        button.classList.remove("selected");
+        const card = document.createElement("button");
 
-        updateSelectedSequence();
+        card.type = "button";
+        card.className = "level-card is-" + state;
+        card.dataset.level = String(level.n);
+        card.style.setProperty("--tilt", TILTS[index % TILTS.length] + "deg");
+        card.setAttribute("aria-disabled", state === "locked" ? "true" : "false");
+        card.setAttribute("aria-label",
+            "Challenge " + level.n + ", " + level.name + ", " + state);
+        card.innerHTML = cardHtml("0" + level.n, level.name, state, meta);
 
-        return;
-    }
-
-    // Select the symbol
-    playerAnswer.push(symbol);
-
-    button.classList.add("selected");
-
-    updateSelectedSequence();
-
-});
-
-        memoryOptions.appendChild(button);
+        board.appendChild(card);
     });
 
-    memoryUndoBtn.style.display = "inline-block";
-}
+    // The final test
+    const finalState = save.finalDone ? "cleared" :
+        allFiveCleared() ? "open" : "locked";
 
-memoryUndoBtn.addEventListener("click", function() {
+    const finalCard = document.createElement("button");
 
-    if (playerAnswer.length === 0) return;
-
-    const lastSymbol = playerAnswer.pop();
-
-    updateSelectedSequence();
-
-    const button = memorySymbolButtons[lastSymbol];
-
-    if (button) {
-        button.classList.remove("selected");
-    }
-});
-memorySubmit.addEventListener("click", function() {
-
-    // Check if player selected 5 symbols
-    if (playerAnswer.length !== memoryQuestion.length) {
-
-        memoryMessage.textContent =
-            "You haven't completed the sequence.";
-
-        return;
-    }
-
-    // Check the sequence
-    let correct = true;
-
-    for (let i = 0; i < memoryQuestion.length; i++) {
-
-        if (playerAnswer[i] !== memoryQuestion[i]) {
-            correct = false;
-            break;
-        }
-    }
-
-    if (correct) {
-
-    const timeTaken =
-        ((performance.now() - memoryStartTime) / 1000).toFixed(2);
-    memoryTime = parseFloat(timeTaken);
-
-    console.log(
-        "Challenge 1 time:",
-        timeTaken,
-        "seconds"
+    finalCard.type = "button";
+    finalCard.className = "level-card is-final is-" + finalState;
+    finalCard.dataset.level = "6";
+    finalCard.style.setProperty("--tilt", "-0.6deg");
+    finalCard.setAttribute("aria-disabled", finalState === "locked" ? "true" : "false");
+    finalCard.setAttribute("aria-label", "Final test, " + finalState);
+    finalCard.innerHTML = cardHtml(
+        "FINAL",
+        "THE LAST SECOND",
+        finalState,
+        finalState === "cleared" && save.finalAccuracy !== null
+            ? "ACCURACY " + Number(save.finalAccuracy).toFixed(2) + "s"
+            : "&nbsp;"
     );
 
-    // Hide memory challenge
-    memoryScreen.style.display = "none";
+    board.appendChild(finalCard);
 
-    // Show result screen
-    memoryResultScreen.style.display = "block";
+    // Left column
+    $("levels-case").textContent = "CASE FILE \u00b7 " + save.name.toUpperCase();
 
-    resultMessage.textContent =
-        "Interesting... You remembered.";
+    let summary =
+        clearedCount() + " of 5 challenges cleared. Time so far: " +
+        totalTime().toFixed(2) + "s.";
 
-    resultTime.textContent =
-        "TIME: " + timeTaken + " SECONDS";
+    if (isCleared(4)) summary += " Missed: " + totalMissed() + ".";
 
-    memorySubmit.style.display = "none";
-    memoryUndoBtn.style.display = "none";
+    $("levels-summary").textContent = summary;
 
-    memoryOptions.innerHTML = "";
+    const target = nextTarget();
 
+    $("levels-continue-label").textContent =
+        target === 0 ? "LEADERBOARD" :
+        target === 6 ? "THE FINAL TEST" :
+        "CONTINUE \u00b7 CHALLENGE 0" + target;
 
-    } else {
-
-    memoryMessage.textContent =
-        "Wrong sequence. Try again.";
-
-    playerAnswer = [];
-
-    // Clear the displayed answer
-    selectedSequence.textContent = "";
-
-    const buttons =
-        document.querySelectorAll(".memory-option");
-
-    buttons.forEach(function(button) {
-
-        button.classList.remove("selected");
-        button.disabled = false;
-
-    });
- }
-     });
-resultContinue.addEventListener("click", function() {
-
-    memoryResultScreen.style.display = "none";
-
-    startWordChallenge();
-});
-function startWordChallenge() {
-
-    wordScreen.style.display = "block";
-
-    // Pick a question from the "easy" tier - the first content challenge
-    currentWordQuestion =
-        pickQuestionByDifficulty(wordQuestions, "easy");
-
-    // Display clue
-    wordClue.textContent =
-        currentWordQuestion.clue;
-
-    // Display hidden word
-    wordDisplay.textContent =
-        currentWordQuestion.word
-            .split("")
-            .map(() => "_")
-            .join(" ");
-
-    // Reset everything
-    wordInput.value = "";
-    wordMessage.textContent = "";
-
-    wordSubmit.disabled = false;
-    wordInput.disabled = false;
-
-    wordInput.focus();
-
-    // Start counting time
-    wordStartTime = performance.now();
-
-    wordTimer.textContent =
-        "TIME: 0.00 SECONDS";
-
-    clearInterval(wordCountdown);
-
-    wordCountdown = setInterval(function() {
-
-        const elapsed =
-            (performance.now() - wordStartTime) / 1000;
-
-        wordTimer.textContent =
-            "TIME: " + elapsed.toFixed(2) + " SECONDS";
-
-    }, 100);
+    levelNote("");
 }
-wordSubmit.addEventListener("click", function() {
 
-    const playerAnswer =
-        wordInput.value.trim().toUpperCase();
+function openLevels() {
 
-    // Don't submit an empty answer
-    if (playerAnswer === "") {
+    stopLevel();
 
-        wordMessage.textContent =
-            "Enter an answer first.";
+    clearInterval(finalTimerInterval);
+
+    showScreen("levels-screen");
+
+    setTopButton("menu");
+
+    renderLevels();
+}
+
+function openLevelCard(n) {
+
+    if (n === 6) {
+
+        if (!allFiveCleared()) {
+            levelNote("Locked. Clear all five challenges first.");
+        } else if (save.finalDone) {
+            levelNote("The final test is done. Reset progress to play again.");
+        } else {
+            startFinalFlow();
+        }
 
         return;
     }
 
-    // Correct answer
-    if (
-        playerAnswer === currentWordQuestion.word ||
-        (currentWordQuestion.accept || []).includes(playerAnswer)
-    ) {
-
-    clearInterval(wordCountdown);
-
-    const timeTaken =
-        ((performance.now() - wordStartTime) / 1000).toFixed(2);
-    wordTime = parseFloat(timeTaken);
-
-    console.log(
-        "Challenge 2 time:",
-        timeTaken,
-        "seconds"
-    );
-
-    wordScreen.style.display = "none";
-
-    wordResultScreen.style.display = "block";
-
-    wordResultMessage.textContent =
-        "You found the word.";
-
-    wordResultTime.textContent =
-        "TIME: " + timeTaken + " SECONDS";
-
-    wordSubmit.disabled = true;
-    wordInput.disabled = true;
-
-
-    } else {
-
-        // Wrong answer
-        wordMessage.textContent =
-            "Wrong answer. Try again.";
-
-        wordInput.value = "";
-
-        wordInput.focus();
+    if (isCleared(n)) {
+        levelNote("Challenge 0" + n + " is already cleared.");
+        return;
     }
 
-});
-wordResultContinue.addEventListener("click", function() {
+    if (!isUnlocked(n)) {
+        levelNote("Locked. Clear challenge 0" + (n - 1) + " first.");
+        return;
+    }
 
-    wordResultScreen.style.display = "none";
-
-    startObservationChallenge();
-
-});
-function startObservationChallenge() {
-    function createObservationScene(scene) {
-
-    observationScene.innerHTML = "";
-
-    const objects = scene.split(" ");
-
-    // Possible positions around the room
-    const positions = [
-        { left: "4%", top: "10%" },
-        { left: "28%", top: "6%" },
-        { left: "52%", top: "12%" },
-        { left: "76%", top: "8%" },
-        { left: "10%", top: "54%" },
-        { left: "34%", top: "58%" },
-        { left: "58%", top: "52%" },
-        { left: "80%", top: "56%" }
-    ];
-
-    // Randomize positions
-    positions.sort(() => Math.random() - 0.5);
-
-    objects.forEach(function(object, index) {
-
-        const element =
-            document.createElement("div");
-
-        element.textContent = object;
-
-        element.classList.add(
-            "observation-object"
-        );
-
-        element.style.left =
-            positions[index].left;
-
-        element.style.top =
-            positions[index].top;
-
-        observationScene.appendChild(element);
-
-    });
-
+    enterLevel(n);
 }
 
-    observationScreen.style.display = "block";
+$("levels-board").addEventListener("click", function (event) {
 
-    // Pick a question from the "medium" tier - harder than the word challenge
-    currentObservationQuestion =
-        pickQuestionByDifficulty(observationQuestions, "medium");
+    const card = event.target.closest(".level-card");
 
-    observationAnswer = "";
+    if (!card) return;
 
-    // Reset screen
-    observationQuestion.textContent = "";
-    observationOptions.innerHTML = "";
-    observationSubmit.style.display = "none";
+    openLevelCard(Number(card.dataset.level));
+});
 
-    observationMessage.textContent =
-        "Look carefully. You won't see it twice.";
+$("levels-continue").addEventListener("click", function () {
 
-    // Show the scene
-    createObservationScene(currentObservationQuestion.scene);
+    const target = nextTarget();
 
-    observationTimer.textContent =
-        "MEMORIZE: " + MEMORIZE_SECONDS;
+    if (target === 0) {
+        openLeaderboard();
+    } else {
+        openLevelCard(target);
+    }
+});
 
-    let countdown = MEMORIZE_SECONDS;
+$("levels-reset").addEventListener("click", function () {
 
-    const sceneTimer = setInterval(function() {
+    askConfirm(
+        "RESET PROGRESS?",
+        "All cleared challenges and times will be erased. Your name is kept.",
+        "YES, RESET",
+        function () {
 
-        countdown--;
+            save.levels = {};
+            save.spent = {};
+            save.finalDone = false;
+            save.finalAccuracy = null;
+            save.scoreSaved = false;
+            save.twistSeen = false;
+            persist();
 
-        if (countdown > 0) {
+            renderLevels();
 
-            observationTimer.textContent =
-                "MEMORIZE: " + countdown;
+            levelNote("Progress reset.");
+        }
+    );
+});
 
-        } else {
+$("levels-menu").addEventListener("click", goTitle);
 
-            clearInterval(sceneTimer);
+restartGameBtn.addEventListener("click", function () {
 
-            // Hide the scene
-            observationScene.textContent = "";
+    if (topMode === "levels") {
+        openLevels();
+    } else if (topMode === "menu") {
+        goTitle();
+    }
+});
 
-            observationMessage.textContent =
-                "What did you see?";
+// =====================================================
+// LEVEL ENGINE: clock, cleanup, completion
+// =====================================================
 
-            observationTimer.textContent =
-                "YOUR TURN";
+let currentLevel = 0;
+let runId = 0;                 // changes whenever a level is left
+let activeCleanup = null;
+let clockStart = null;
+let liveTimer = null;
 
-            showObservationQuestion();
+function startClock() {
+    if (clockStart === null) clockStart = performance.now();
+}
 
+// Add the time of the running attempt to this level's total
+function pauseClock() {
+
+    if (clockStart === null || !save || !currentLevel) {
+        clockStart = null;
+        return;
+    }
+
+    const elapsed = (performance.now() - clockStart) / 1000;
+
+    clockStart = null;
+
+    if (currentLevel <= 5) {
+        save.spent[currentLevel] =
+            Number(((save.spent[currentLevel] || 0) + elapsed).toFixed(3));
+        persist();
+    }
+}
+
+function levelSeconds() {
+
+    const base = save && currentLevel ? (save.spent[currentLevel] || 0) : 0;
+
+    return base +
+        (clockStart === null ? 0 : (performance.now() - clockStart) / 1000);
+}
+
+function startLive(elementId) {
+
+    clearInterval(liveTimer);
+
+    const element = $(elementId);
+
+    function draw() {
+        element.textContent = "TIME " + levelSeconds().toFixed(1);
+    }
+
+    draw();
+
+    liveTimer = setInterval(draw, 100);
+}
+
+function stopLevel() {
+
+    runId++;
+
+    if (activeCleanup) {
+
+        try { activeCleanup(); } catch (error) { /* ignore */ }
+
+        activeCleanup = null;
+    }
+
+    pauseClock();
+
+    clearInterval(liveTimer);
+
+    currentLevel = 0;
+}
+
+function enterLevel(n) {
+
+    stopLevel();
+
+    currentLevel = n;
+
+    showScreen(LEVELS[n - 1].screen);
+
+    setTopButton("levels");
+
+    const starters = [startRobots, startCards, startLock, startReflex, startDoors];
+
+    starters[n - 1]();
+}
+
+function completeLevel(n, extra) {
+
+    pauseClock();
+
+    clearInterval(liveTimer);
+
+    const time = Number((save.spent[n] || 0).toFixed(2));
+
+    save.levels[n] = Object.assign({ time: time }, extra || {});
+
+    delete save.spent[n];
+
+    persist();
+
+    showLevelResult(n);
+}
+
+const RESULT_MESSAGES = {
+    1: "Every robot, down.",
+    2: "You kept your eyes on it.",
+    3: "Your hand remembered.",
+    4: "Fast hands.",
+    5: "You chose well."
+};
+
+let resultLevel = 0;
+
+function showLevelResult(n) {
+
+    resultLevel = n;
+
+    // The clock is stopped, so leave the level but keep its results
+    runId++;
+    activeCleanup = null;
+    currentLevel = 0;
+
+    showScreen("level-result-screen");
+
+    setTopButton("menu");
+
+    const record = save.levels[n];
+
+    $("level-result-label").textContent = "CHALLENGE 0" + n;
+    $("level-result-message").textContent = RESULT_MESSAGES[n];
+    $("level-result-time").textContent =
+        "TIME: " + record.time.toFixed(2) + " SECONDS";
+    $("level-result-extra").textContent =
+        n === 4 ? "MISSED: " + (record.missed || 0) : "";
+
+    $("level-result-next").textContent =
+        n < 5 ? "START CHALLENGE 0" + (n + 1) : "THE FINAL TEST";
+}
+
+$("level-result-next").addEventListener("click", function () {
+
+    if (resultLevel < 5) {
+        enterLevel(resultLevel + 1);
+    } else {
+        startFinalFlow();
+    }
+});
+
+$("level-result-levels").addEventListener("click", openLevels);
+
+// 3, 2, 1 inside a container
+async function runCountdown(id, container) {
+
+    const overlay = document.createElement("div");
+
+    overlay.className = "countdown";
+
+    container.appendChild(overlay);
+
+    const steps = ["3", "2", "1", "GO"];
+
+    for (let i = 0; i < steps.length; i++) {
+
+        overlay.textContent = steps[i];
+
+        await sleep(i === steps.length - 1 ? 350 : 650);
+
+        if (id !== runId) break;
+    }
+
+    overlay.remove();
+}
+
+// =====================================================
+// CHALLENGE 1: ROBOTS
+// Robots appear one at a time. Shoot each before it vanishes.
+// Miss one and the challenge starts again (the clock keeps running).
+// =====================================================
+
+const ROBOTS_TOTAL = 12;
+
+function spawnRobot(arena, visibleMs) {
+
+    return new Promise(function (resolve) {
+
+        const robot = document.createElement("button");
+
+        robot.type = "button";
+        robot.className = "robot";
+        robot.setAttribute("aria-label", "Robot");
+        robot.textContent = "\u{1F916}";
+        robot.style.left = (10 + randInt(80)) + "%";
+        robot.style.top = (14 + randInt(72)) + "%";
+
+        let finished = false;
+
+        const timeout = setTimeout(function () {
+
+            if (finished) return;
+
+            finished = true;
+
+            robot.classList.add("escaped");
+
+            setTimeout(function () { robot.remove(); }, 260);
+
+            resolve(false);
+
+        }, visibleMs);
+
+        robot.addEventListener("click", function () {
+
+            if (finished) return;
+
+            finished = true;
+
+            clearTimeout(timeout);
+
+            robot.classList.add("shot");
+
+            setTimeout(function () { robot.remove(); }, 240);
+
+            resolve(true);
+        });
+
+        arena.appendChild(robot);
+    });
+}
+
+async function robotsAttempt(id, arena, stat) {
+
+    arena.innerHTML = "";
+
+    stat.textContent = "SHOT 0 / " + ROBOTS_TOTAL;
+
+    await runCountdown(id, arena);
+
+    if (id !== runId) return false;
+
+    startClock();
+
+    for (let i = 0; i < ROBOTS_TOTAL; i++) {
+
+        const visible = Math.max(800, 1450 - i * 55);
+
+        const hit = await spawnRobot(arena, visible);
+
+        if (id !== runId) return false;
+
+        if (!hit) return false;
+
+        stat.textContent = "SHOT " + (i + 1) + " / " + ROBOTS_TOTAL;
+
+        await sleep(Math.max(180, 420 - i * 20));
+
+        if (id !== runId) return false;
+    }
+
+    return true;
+}
+
+function startRobots() {
+
+    const id = runId;
+
+    const arena = $("robots-arena");
+    const message = $("robots-message");
+    const stat = $("robots-stat");
+
+    message.textContent = "Shoot every robot before it disappears.";
+
+    startLive("robots-time");
+
+    activeCleanup = function () { arena.innerHTML = ""; };
+
+    (async function loop() {
+
+        while (id === runId) {
+
+            const ok = await robotsAttempt(id, arena, stat);
+
+            if (id !== runId) return;
+
+            pauseClock();
+
+            if (ok) {
+                completeLevel(1);
+                return;
+            }
+
+            message.textContent = "A ROBOT GOT AWAY. FROM THE TOP.";
+
+            arena.classList.add("failed");
+
+            await sleep(1600);
+
+            arena.classList.remove("failed");
+
+            message.textContent = "Shoot every robot before it disappears.";
         }
 
-    }, 1000);
+    })();
 }
-function showObservationQuestion() {
 
-    observationQuestion.textContent =
-        currentObservationQuestion.question;
+// =====================================================
+// CHALLENGE 2: CARDS
+// One card is shown, then shuffled with the others. Find it.
+// =====================================================
 
-    currentObservationQuestion.options.forEach(function(option) {
+const CARD_SYMBOLS = ["\u2660", "\u2665", "\u2666", "\u2663", "\u2605",
+    "\u263E", "\u2600", "\u2726", "\u2691", "\u265E"];
 
-        const button =
-            document.createElement("button");
+const RED_SYMBOLS = ["\u2665", "\u2666", "\u2605"];
 
-        button.textContent = option;
+function buildCards(row, symbols) {
 
-        button.classList.add(
-            "observation-option"
-        );
+    row.innerHTML = "";
 
-        button.addEventListener("click", function() {
+    return symbols.map(function (symbol, index) {
 
-            // Remove previous selection
-            const buttons =
-                document.querySelectorAll(
-                    ".observation-option"
-                );
+        const card = document.createElement("button");
 
-            buttons.forEach(function(btn) {
-                btn.classList.remove("selected");
+        card.type = "button";
+        card.className = "card" + (RED_SYMBOLS.indexOf(symbol) !== -1 ? " red" : "");
+        card.dataset.id = String(index);
+        card.setAttribute("aria-label", "Card");
+        card.style.setProperty("--slot", String(index));
+        card.innerHTML =
+            '<span class="card-inner">' +
+            '<span class="card-back"></span>' +
+            '<span class="card-face">' + symbol + '</span>' +
+            '</span>';
+
+        row.appendChild(card);
+
+        return card;
+    });
+}
+
+async function cardsAttempt(id) {
+
+    const row = $("cards-row");
+    const message = $("cards-message");
+
+    const symbols = shuffled(CARD_SYMBOLS).slice(0, 5);
+
+    const cards = buildCards(row, symbols);
+
+    const order = [0, 1, 2, 3, 4];          // order[slot] = card index
+
+    const target = randInt(5);
+
+    row.classList.add("locked");
+
+    row.style.setProperty("--swap", "0.4s");
+
+    message.textContent = "Remember this card.";
+
+    startClock();
+
+    await sleep(600);
+
+    if (id !== runId) return null;
+
+    cards[target].classList.add("flipped");
+
+    await sleep(2600);
+
+    if (id !== runId) return null;
+
+    cards[target].classList.remove("flipped");
+
+    await sleep(650);
+
+    if (id !== runId) return null;
+
+    message.textContent = "Watch closely...";
+
+    for (let k = 0; k < 10; k++) {
+
+        const ms = Math.round(430 - k * 22);
+
+        row.style.setProperty("--swap", ms + "ms");
+
+        const a = randInt(5);
+
+        let b = randInt(5);
+
+        while (b === a) b = randInt(5);
+
+        const t = order[a]; order[a] = order[b]; order[b] = t;
+
+        for (let slot = 0; slot < 5; slot++) {
+            cards[order[slot]].style.setProperty("--slot", String(slot));
+        }
+
+        await sleep(ms + 70);
+
+        if (id !== runId) return null;
+    }
+
+    message.textContent = "Which one was it?";
+
+    row.classList.remove("locked");
+
+    const chosen = await new Promise(function (resolve) {
+
+        row.onclick = function (event) {
+
+            const card = event.target.closest(".card");
+
+            if (!card || row.classList.contains("locked")) return;
+
+            row.classList.add("locked");
+
+            resolve(Number(card.dataset.id));
+        };
+    });
+
+    if (id !== runId) return null;
+
+    cards[chosen].classList.add("flipped");
+
+    if (chosen !== target) cards[target].classList.add("flipped", "reveal");
+
+    pauseClock();
+
+    await sleep(1200);
+
+    return chosen === target;
+}
+
+function startCards() {
+
+    const id = runId;
+
+    const message = $("cards-message");
+    const stat = $("cards-stat");
+
+    startLive("cards-time");
+
+    activeCleanup = function () {
+        $("cards-row").onclick = null;
+        $("cards-row").innerHTML = "";
+    };
+
+    (async function loop() {
+
+        let attempt = 0;
+
+        while (id === runId) {
+
+            attempt++;
+
+            stat.textContent = "ATTEMPT " + attempt;
+
+            const ok = await cardsAttempt(id);
+
+            if (id !== runId || ok === null) return;
+
+            if (ok) {
+                completeLevel(2);
+                return;
+            }
+
+            message.textContent = "WRONG CARD. FROM THE TOP.";
+
+            await sleep(900);
+        }
+
+    })();
+}
+
+// =====================================================
+// CHALLENGE 3: PATTERN LOCK (3 x 3 dots, like a phone)
+// =====================================================
+
+const LOCK_POS = [17, 50, 83];       // dot centres, in percent
+const LOCK_LENGTH = 5;
+const LOCK_SECONDS = 9;
+
+function lockMidpoint(a, b) {
+
+    const ar = Math.floor(a / 3), ac = a % 3;
+    const br = Math.floor(b / 3), bc = b % 3;
+
+    const dr = Math.abs(ar - br);
+    const dc = Math.abs(ac - bc);
+
+    if ((dr === 0 || dr === 2) && (dc === 0 || dc === 2) && (dr + dc > 0)) {
+        return ((ar + br) / 2) * 3 + (ac + bc) / 2;
+    }
+
+    return null;
+}
+
+// A random pattern where no jump passes over an unused dot,
+// so the pattern is never ambiguous
+function generatePattern(length) {
+
+    while (true) {
+
+        const sequence = [randInt(9)];
+
+        while (sequence.length < length) {
+
+            const last = sequence[sequence.length - 1];
+
+            const options = [];
+
+            for (let d = 0; d < 9; d++) {
+
+                if (sequence.indexOf(d) !== -1) continue;
+
+                const mid = lockMidpoint(last, d);
+
+                if (mid !== null && sequence.indexOf(mid) === -1) continue;
+
+                options.push(d);
+            }
+
+            if (options.length === 0) break;
+
+            sequence.push(pick(options));
+        }
+
+        if (sequence.length === length) return sequence;
+    }
+}
+
+function startLock() {
+
+    const id = runId;
+
+    const pad = $("lock-pad");
+    const message = $("lock-message");
+    const stat = $("lock-stat");
+    const bar = $("lock-bar").firstElementChild;
+
+    // build the pad
+    let html = '<svg class="lock-lines" viewBox="0 0 100 100">' +
+        '<polyline class="lock-line" points=""></polyline>' +
+        '<line class="lock-live" x1="0" y1="0" x2="0" y2="0"></line></svg>';
+
+    for (let i = 0; i < 9; i++) {
+        html += '<span class="lock-dot" data-dot="' + i + '" style="left:' +
+            LOCK_POS[i % 3] + '%;top:' + LOCK_POS[Math.floor(i / 3)] +
+            '%"><b></b></span>';
+    }
+
+    pad.innerHTML = html;
+
+    const dots = Array.from(pad.querySelectorAll(".lock-dot"));
+    const polyline = pad.querySelector(".lock-line");
+    const live = pad.querySelector(".lock-live");
+
+    let expected = [];
+    let path = [];
+    let accepting = false;
+    let dragging = false;
+    let lastPoint = null;
+    let finish = null;
+
+    function center(i) {
+        return { x: LOCK_POS[i % 3], y: LOCK_POS[Math.floor(i / 3)] };
+    }
+
+    function drawLine(list) {
+        polyline.setAttribute("points", list.map(function (i) {
+            const c = center(i);
+            return c.x + "," + c.y;
+        }).join(" "));
+    }
+
+    function clearDraw() {
+
+        path = [];
+
+        drawLine([]);
+
+        live.setAttribute("x2", "0");
+        live.setAttribute("y2", "0");
+        live.setAttribute("x1", "0");
+        live.setAttribute("y1", "0");
+
+        dots.forEach(function (dot) {
+            dot.classList.remove("on", "show", "good", "bad");
+            dot.firstElementChild.textContent = "";
+        });
+    }
+
+    function render() {
+
+        dots.forEach(function (dot, i) {
+            dot.classList.toggle("on", path.indexOf(i) !== -1);
+        });
+
+        drawLine(path);
+    }
+
+    function toPoint(event) {
+
+        const rect = pad.getBoundingClientRect();
+
+        return {
+            x: (event.clientX - rect.left) / rect.width * 100,
+            y: (event.clientY - rect.top) / rect.height * 100
+        };
+    }
+
+    function dotAt(x, y) {
+
+        for (let i = 0; i < 9; i++) {
+
+            const c = center(i);
+
+            if (Math.hypot(x - c.x, y - c.y) <= 12) return i;
+        }
+
+        return -1;
+    }
+
+    function addDot(d) {
+
+        if (path.length > 0) {
+
+            const mid = lockMidpoint(path[path.length - 1], d);
+
+            if (mid !== null && path.indexOf(mid) === -1) path.push(mid);
+        }
+
+        path.push(d);
+
+        render();
+
+        if (path.length >= expected.length && finish) {
+            finish(path.join(",") === expected.join(",") ? "ok" : "bad");
+        }
+    }
+
+    function sample(from, to) {
+
+        const distance = Math.hypot(to.x - from.x, to.y - from.y);
+
+        const steps = Math.max(1, Math.ceil(distance / 3));
+
+        for (let s = 0; s <= steps; s++) {
+
+            if (!accepting) return;
+
+            const x = from.x + (to.x - from.x) * s / steps;
+            const y = from.y + (to.y - from.y) * s / steps;
+
+            const d = dotAt(x, y);
+
+            if (d !== -1 && path.indexOf(d) === -1) addDot(d);
+        }
+    }
+
+    pad.onpointerdown = function (event) {
+
+        if (!accepting) return;
+
+        event.preventDefault();
+
+        try { pad.setPointerCapture(event.pointerId); } catch (error) { /* ignore */ }
+
+        dragging = true;
+
+        lastPoint = toPoint(event);
+
+        sample(lastPoint, lastPoint);
+    };
+
+    pad.onpointermove = function (event) {
+
+        if (!accepting || !dragging) return;
+
+        const point = toPoint(event);
+
+        sample(lastPoint, point);
+
+        lastPoint = point;
+
+        if (path.length > 0) {
+
+            const c = center(path[path.length - 1]);
+
+            live.setAttribute("x1", c.x);
+            live.setAttribute("y1", c.y);
+            live.setAttribute("x2", point.x);
+            live.setAttribute("y2", point.y);
+        }
+    };
+
+    function endDrag() {
+
+        dragging = false;
+
+        live.setAttribute("x2", live.getAttribute("x1"));
+        live.setAttribute("y2", live.getAttribute("y1"));
+    }
+
+    pad.onpointerup = endDrag;
+    pad.onpointercancel = endDrag;
+
+    $("lock-clear").onclick = function () {
+
+        if (!accepting) return;
+
+        path = [];
+
+        render();
+    };
+
+    startLive("lock-time");
+
+    let barTimer = null;
+
+    activeCleanup = function () {
+
+        accepting = false;
+
+        clearTimeout(barTimer);
+
+        pad.onpointerdown = null;
+        pad.onpointermove = null;
+        pad.onpointerup = null;
+        pad.onpointercancel = null;
+
+        $("lock-clear").onclick = null;
+
+        pad.innerHTML = "";
+    };
+
+    function resetBar() {
+        bar.style.transition = "none";
+        bar.style.width = "100%";
+    }
+
+    async function attempt() {
+
+        expected = generatePattern(LOCK_LENGTH);
+
+        clearDraw();
+
+        resetBar();
+
+        message.textContent = "Watch the pattern.";
+
+        startClock();
+
+        await sleep(700);
+
+        if (id !== runId) return null;
+
+        // show the pattern one dot at a time
+        for (let k = 0; k < expected.length; k++) {
+
+            dots[expected[k]].classList.add("show");
+            dots[expected[k]].firstElementChild.textContent = String(k + 1);
+
+            drawLine(expected.slice(0, k + 1));
+
+            await sleep(560);
+
+            if (id !== runId) return null;
+        }
+
+        await sleep(1000);
+
+        if (id !== runId) return null;
+
+        clearDraw();
+
+        message.textContent = "Now draw it. Go!";
+
+        // time bar
+        void bar.offsetWidth;
+
+        bar.style.transition = "width " + LOCK_SECONDS + "s linear";
+        bar.style.width = "0%";
+
+        accepting = true;
+
+        const result = await new Promise(function (resolve) {
+
+            finish = resolve;
+
+            barTimer = setTimeout(function () { resolve("timeout"); },
+                LOCK_SECONDS * 1000);
+        });
+
+        clearTimeout(barTimer);
+
+        finish = null;
+
+        accepting = false;
+
+        dragging = false;
+
+        pauseClock();
+
+        resetBar();
+
+        if (id !== runId) return null;
+
+        if (result === "ok") {
+
+            dots.forEach(function (dot, i) {
+                if (path.indexOf(i) !== -1) dot.classList.add("good");
             });
 
-            // Select this answer
-            button.classList.add("selected");
+            await sleep(600);
 
-            observationAnswer = option;
+            return true;
+        }
 
+        // wrong or too slow: show the right pattern
+        message.textContent = result === "timeout" ? "TOO SLOW." : "NOT THAT ONE.";
+
+        clearDraw();
+
+        expected.forEach(function (d, k) {
+            dots[d].classList.add("bad");
+            dots[d].firstElementChild.textContent = String(k + 1);
         });
 
-        observationOptions.appendChild(button);
+        drawLine(expected);
 
-    });
+        await sleep(1500);
 
-    observationSubmit.style.display = "block";
+        return false;
+    }
 
-    // Start answer timer
-    observationStartTime =
-        performance.now();
+    (async function loop() {
 
-    observationTimerInterval =
-        setInterval(function() {
+        let attemptNo = 0;
 
-            const elapsed =
-                (performance.now() -
-                    observationStartTime) / 1000;
+        while (id === runId) {
 
-            observationTimer.textContent =
-                "TIME: " +
-                elapsed.toFixed(2) +
-                " SECONDS";
+            attemptNo++;
 
-        }, 100);
+            stat.textContent = "ATTEMPT " + attemptNo;
 
+            const ok = await attempt();
+
+            if (id !== runId || ok === null) return;
+
+            if (ok) {
+                completeLevel(3);
+                return;
+            }
+        }
+
+    })();
 }
-observationSubmit.addEventListener("click", function() {
 
-    // Make sure an option was selected
-    if (observationAnswer === "") {
+// =====================================================
+// CHALLENGE 4: REFLEX (a square glows, touch it)
+// The squares glow faster and faster. Missed ones are counted.
+// =====================================================
 
-        observationMessage.textContent =
-            "Choose an answer first.";
+const REFLEX_ROUNDS = 20;
 
-        return;
+function startReflex() {
+
+    const id = runId;
+
+    const pad = $("grid-pad");
+    const stat = $("grid-stat");
+
+    pad.innerHTML = "";
+
+    const tiles = [];
+
+    for (let i = 0; i < 9; i++) {
+
+        const tile = document.createElement("button");
+
+        tile.type = "button";
+        tile.className = "tile";
+        tile.setAttribute("aria-label", "Square " + (i + 1));
+
+        pad.appendChild(tile);
+
+        tiles.push(tile);
     }
 
-    // Check answer first
-    if (
-    observationAnswer ===
-    currentObservationQuestion.answer
-) {
+    startLive("grid-time");
 
-    // Stop timer
-    clearInterval(observationTimerInterval);
+    activeCleanup = function () { pad.innerHTML = ""; };
 
-    const timeTaken =
-        ((performance.now() -
-            observationStartTime) / 1000).toFixed(2);
-observationTime = parseFloat(timeTaken);
+    let missed = 0;
+    let glowing = -1;
+    let hitResolve = null;
 
-    console.log(
-        "Challenge 3 time:",
-        timeTaken,
-        "seconds"
-    );
+    pad.onclick = function (event) {
 
-    // Hide challenge
-    observationScreen.style.display = "none";
+        const tile = event.target.closest(".tile");
 
-    // Show result
-    observationResultScreen.style.display = "block";
+        if (!tile) return;
 
-    observationResultMessage.textContent =
-        "You noticed what was missing.";
+        const index = tiles.indexOf(tile);
 
-    observationResultTime.textContent =
-        "TIME: " + timeTaken + " SECONDS";
+        if (index === glowing && hitResolve) {
+            hitResolve(true);
+        } else {
+            tile.classList.remove("nope");
+            void tile.offsetWidth;
+            tile.classList.add("nope");
+        }
+    };
 
-    observationSubmit.style.display = "none";
-
-    observationOptions.innerHTML = "";
-
-
-    } else {
-
-        // Wrong answer
-        observationMessage.textContent =
-            "Wrong observation. Try again.";
-
-        observationAnswer = "";
-
-        // Clear selected button
-        const buttons =
-            document.querySelectorAll(
-                ".observation-option"
-            );
-
-        buttons.forEach(function(button) {
-
-            button.classList.remove("selected");
-
-        });
-
-        // DO NOT stop or restart the timer.
-        // It keeps running from the original start time.
+    function drawStat(round) {
+        stat.textContent =
+            "ROUND " + round + " / " + REFLEX_ROUNDS + " \u00b7 MISSED " + missed;
     }
 
-});
-observationResultContinue.addEventListener(
-    "click",
-    function() {
+    (async function run() {
 
-        observationResultScreen.style.display =
-            "none";
+        drawStat(0);
 
-        startLogicChallenge();
+        await runCountdown(id, pad);
 
-    }
-);
-function startLogicChallenge() {
+        if (id !== runId) return;
 
-    logicScreen.style.display = "block";
+        startClock();
 
-    // Pick a question from the "hard" tier - the toughest content challenge
-    currentLogicQuestion =
-        pickQuestionByDifficulty(logicQuestions, "hard");
+        let last = -1;
 
-    logicAnswer = "";
+        for (let round = 0; round < REFLEX_ROUNDS; round++) {
 
-    logicMessage.textContent =
-        "Think carefully.";
+            const progress = round / (REFLEX_ROUNDS - 1);
 
-    logicQuestion.textContent =
-        currentLogicQuestion.question;
+            const glowMs = Math.round(1150 - 700 * progress);
+            const gapMs = Math.round(420 - 250 * progress);
 
-    logicOptions.innerHTML = "";
+            let index = randInt(9);
 
-    logicSubmit.style.display = "block";
+            while (index === last) index = randInt(9);
 
-    currentLogicQuestion.options.forEach(function(option) {
+            last = index;
 
-        const button =
-            document.createElement("button");
+            drawStat(round + 1);
 
-        button.textContent = option;
+            const tile = tiles[index];
 
-        button.classList.add("logic-option");
+            tile.classList.add("glow");
 
-        button.addEventListener("click", function() {
+            glowing = index;
 
-            const buttons =
-                document.querySelectorAll(".logic-option");
+            const hit = await new Promise(function (resolve) {
 
-            buttons.forEach(function(btn) {
-                btn.classList.remove("selected");
+                hitResolve = resolve;
+
+                setTimeout(function () { resolve(false); }, glowMs);
             });
 
-            button.classList.add("selected");
+            hitResolve = null;
 
-            logicAnswer = option;
+            glowing = -1;
 
-        });
+            if (id !== runId) return;
 
-        logicOptions.appendChild(button);
+            tile.classList.remove("glow");
 
-    });
-
-    logicStartTime = performance.now();
-
-    logicTimer.textContent =
-        "TIME: 0.00 SECONDS";
-
-    clearInterval(logicTimerInterval);
-
-    logicTimerInterval =
-        setInterval(function() {
-
-            const elapsed =
-                (performance.now() -
-                    logicStartTime) / 1000;
-
-            logicTimer.textContent =
-                "TIME: " +
-                elapsed.toFixed(2) +
-                " SECONDS";
-
-        }, 100);
-
-}
-logicSubmit.addEventListener("click", function() {
-
-    if (logicAnswer === "") {
-
-        logicMessage.textContent =
-            "Choose an answer first.";
-
-        return;
-    }
-
-    if (logicAnswer === currentLogicQuestion.answer) {
-
-        clearInterval(logicTimerInterval);
-
-        const timeTaken =
-            ((performance.now() -
-                logicStartTime) / 1000).toFixed(2);
-        logicTime = parseFloat(timeTaken);
-
-        console.log(
-            "Challenge 4 time:",
-            timeTaken,
-            "seconds"
-        );
-
-        logicScreen.style.display = "none";
-
-logicResultScreen.style.display = "block";
-
-logicResultMessage.textContent =
-    "You solved the pattern.";
-
-logicResultTime.textContent =
-    "TIME: " + timeTaken + " SECONDS";
-
-logicSubmit.style.display = "none";
-
-logicOptions.innerHTML = "";
-
-    } else {
-
-        logicMessage.textContent =
-            "Wrong. Think again.";
-
-        logicAnswer = "";
-
-        const buttons =
-            document.querySelectorAll(".logic-option");
-
-        buttons.forEach(function(button) {
-            button.classList.remove("selected");
-        });
-
-        // Timer keeps running.
-    }
-
-});
-logicResultContinue.addEventListener(
-    "click",
-    function() {
-
-        logicResultScreen.style.display = "none";
-        startPatternChallenge();
-    }
-);
-
-
-function startPatternChallenge() {
-
-    patternScreen.style.display = "block";
-
-    // Every entry in patternQuestions is a 6-symbol pattern.
-    const randomIndex =
-        Math.floor(Math.random() * patternQuestions.length);
-
-    currentPatternQuestion =
-        patternQuestions[randomIndex];
-
-    patternAnswer = [];
-
-    patternMessage.textContent =
-        "Remember the pattern.";
-
-    patternOptions.innerHTML = "";
-
-    selectedPattern.textContent = "";
-
-    patternSubmit.style.display = "none";
-    patternUndoBtn.style.display = "none";
-
-    patternDisplay.textContent =
-        currentPatternQuestion.pattern.join(" ");
-
-    patternTimer.textContent =
-        "MEMORIZE: " + MEMORIZE_SECONDS;
-
-    let countdown = MEMORIZE_SECONDS;
-
-    const patternCountdown =
-        setInterval(function() {
-
-            countdown--;
-
-            if (countdown > 0) {
-
-                patternTimer.textContent =
-                    "MEMORIZE: " + countdown;
-
+            if (hit) {
+                tile.classList.add("hit");
             } else {
-
-                clearInterval(patternCountdown);
-
-                patternDisplay.textContent = "";
-
-                patternMessage.textContent =
-                    "Recreate the pattern.";
-
-                patternTimer.textContent =
-                    "YOUR TURN";
-
-                showPatternOptions();
+                missed++;
+                tile.classList.add("miss");
             }
 
-        }, 1000);
+            drawStat(round + 1);
 
-}
+            setTimeout(function () {
+                tile.classList.remove("hit", "miss");
+            }, 260);
 
+            await sleep(gapMs);
 
-function showPatternOptions() {
-
-    patternUndoBtn.style.display = "inline-block";
-
-    currentPatternQuestion.options.forEach(function(symbol) {
-
-        const button =
-            document.createElement("button");
-
-        button.textContent = symbol;
-
-        button.classList.add("pattern-option");
-
-        button.addEventListener("click", function() {
-
-            // Add the selected symbol
-            patternAnswer.push(symbol);
-
-            selectedPattern.textContent =
-                patternAnswer.join(" ");
-
-            // Show Submit after 5 selections
-            if (
-                patternAnswer.length ===
-                currentPatternQuestion.pattern.length
-            ) {
-
-                patternSubmit.style.display =
-                    "block";
-
-            }
-
-        });
-
-        patternOptions.appendChild(button);
-
-    });
-
-    patternStartTime =
-        performance.now();
-
-    patternTimer.textContent =
-        "TIME: 0.00 SECONDS";
-
-    patternTimerInterval =
-        setInterval(function() {
-
-            const elapsed =
-                (performance.now() -
-                    patternStartTime) / 1000;
-
-            patternTimer.textContent =
-                "TIME: " +
-                elapsed.toFixed(2) +
-                " SECONDS";
-
-        }, 100);
-
-}
-
-patternUndoBtn.addEventListener("click", function() {
-
-    if (patternAnswer.length === 0) return;
-
-    patternAnswer.pop();
-
-    selectedPattern.textContent =
-        patternAnswer.join(" ");
-
-    // Fewer symbols than the pattern means it can't be submitted yet
-    patternSubmit.style.display = "none";
-});
-
-patternSubmit.addEventListener("click", function() {
-
-    let correct = true;
-
-    for (let i = 0; i < currentPatternQuestion.pattern.length; i++) {
-
-        if (
-            patternAnswer[i] !==
-            currentPatternQuestion.pattern[i]
-        ) {
-            correct = false;
-            break;
+            if (id !== runId) return;
         }
 
+        pauseClock();
+
+        completeLevel(4, { missed: missed });
+
+    })();
+}
+
+// =====================================================
+// CHALLENGE 5: TWO DOORS
+// One door leads out. The question tells you which.
+// =====================================================
+
+function otherSide(side) { return side === "left" ? "right" : "left"; }
+
+const DOOR_PUZZLES = [
+
+    // both signs lie
+    function () {
+        const exit = pick(["left", "right"]);
+        const other = otherSide(exit);
+        const plates = {};
+        plates[exit] = "\u201CThe exit is behind the " + other + " door.\u201D";
+        plates[other] = "\u201CThe exit is behind this door.\u201D";
+        return { rule: "Both signs are lying.", question: "Which door leads out?",
+            plates: plates, colors: null, answer: exit };
+    },
+
+    // one sign always lies, the other always tells the truth
+    function () {
+        const liar = pick(["left", "right"]);
+        const truth = otherSide(liar);
+        const plates = {};
+        plates[liar] = "\u201CThe exit is behind this door.\u201D";
+        plates[truth] = "\u201CThe " + liar + " sign is lying.\u201D";
+        return { rule: "The " + liar + " sign always lies. The " + truth +
+            " sign always tells the truth.", question: "Which door leads out?",
+            plates: plates, colors: null, answer: truth };
+    },
+
+    // both signs tell the truth
+    function () {
+        const a = pick(["left", "right"]);
+        const b = otherSide(a);
+        const plates = {};
+        plates[a] = "\u201CThe exit is not behind this door.\u201D";
+        plates[b] = "\u201CThe exit is not behind the " + a + " door.\u201D";
+        return { rule: "Both signs are telling the truth.", question: "Which door leads out?",
+            plates: plates, colors: null, answer: b };
+    },
+
+    // truthful sign points at the liar's door
+    function () {
+        const truth = pick(["left", "right"]);
+        const liar = otherSide(truth);
+        const plates = {};
+        plates[truth] = "\u201CThe exit is behind the " + liar + " door.\u201D";
+        plates[liar] = "\u201CThe exit is behind the " + truth + " door.\u201D";
+        return { rule: "The " + truth + " sign tells the truth. The " + liar + " sign lies.",
+            question: "Which door leads out?", plates: plates, colors: null, answer: liar };
+    },
+
+    // multiple of 7
+    function () {
+        const good = 7 * (6 + randInt(8));
+        const bad = good + pick([-3, -2, -1, 1, 2, 3]);
+        const side = pick(["left", "right"]);
+        const plates = {};
+        plates[side] = String(good);
+        plates[otherSide(side)] = String(bad);
+        return { rule: "The doors are numbered.",
+            question: "The exit door is marked with a multiple of 7.",
+            plates: plates, colors: null, answer: side };
+    },
+
+    // next number in a sequence
+    function () {
+        const sequences = [
+            { shown: "2, 6, 12, 20, ?", answer: 30 },
+            { shown: "3, 6, 12, 24, ?", answer: 48 },
+            { shown: "1, 4, 9, 16, ?", answer: 25 },
+            { shown: "1, 1, 2, 3, 5, 8, ?", answer: 13 },
+            { shown: "5, 10, 20, 40, ?", answer: 80 }
+        ];
+        const s = pick(sequences);
+        const side = pick(["left", "right"]);
+        const plates = {};
+        plates[side] = String(s.answer);
+        plates[otherSide(side)] = String(s.answer + pick([-4, -2, 2, 4]));
+        return { rule: "The exit door carries the next number.",
+            question: s.shown, plates: plates, colors: null, answer: side };
+    },
+
+    // arithmetic
+    function () {
+        const a = pick([13, 14, 15, 16, 17, 18, 19]);
+        const b = pick([3, 4, 6, 7]);
+        const side = pick(["left", "right"]);
+        const plates = {};
+        plates[side] = String(a * b);
+        plates[otherSide(side)] = String(a * b + pick([-6, -3, 3, 6, 10]));
+        return { rule: "The doors are numbered.",
+            question: "The exit door is marked with " + a + " \u00d7 " + b + ".",
+            plates: plates, colors: null, answer: side };
+    },
+
+    // the hallway clock
+    function () {
+        const side = pick(["left", "right"]);
+        const plates = {};
+        plates[side] = "11:48";
+        plates[otherSide(side)] = pick(["11:47", "11:49", "11:38", "12:48"]);
+        return { rule: "Each door has a clock.",
+            question: "You stepped inside at 11:48 PM. The exit door shows that time.",
+            plates: plates, colors: null, answer: side };
+    },
+
+    // colours
+    function () {
+        const redSide = pick(["left", "right"]);
+        const plates = {};
+        plates[redSide] = "RED";
+        plates[otherSide(redSide)] = "BLUE";
+        const colors = {};
+        colors[redSide] = "red";
+        colors[otherSide(redSide)] = "blue";
+        return { rule: "One door is red. The other is blue.",
+            question: "The exit is NOT behind the red door.",
+            plates: plates, colors: colors, answer: otherSide(redSide) };
     }
+];
 
-    if (correct) {
+let lastDoorPuzzle = -1;
 
-        clearInterval(patternTimerInterval);
+function nextDoorPuzzle() {
 
-        const timeTaken =
-            ((performance.now() -
-                patternStartTime) / 1000).toFixed(2);
-        patternTime = parseFloat(timeTaken);
+    let index = randInt(DOOR_PUZZLES.length);
 
-        console.log(
-            "Challenge 5 time:",
-            timeTaken,
-            "seconds"
-        );
+    while (index === lastDoorPuzzle) index = randInt(DOOR_PUZZLES.length);
 
-        patternScreen.style.display = "none";
+    lastDoorPuzzle = index;
 
-patternResultScreen.style.display = "block";
+    return DOOR_PUZZLES[index]();
+}
 
-patternResultMessage.textContent =
-    "You remembered the pattern.";
+function startDoors() {
 
-patternResultTime.textContent =
-    "TIME: " + timeTaken + " SECONDS";
+    const id = runId;
 
-patternOptions.innerHTML = "";
-patternSubmit.style.display = "none";
-patternUndoBtn.style.display = "none";
+    const doorsBox = $("doors");
+    const message = $("doors-message");
+    const stat = $("doors-stat");
+    const question = $("doors-question");
 
-    } else {
+    startLive("doors-time");
 
-        patternMessage.textContent =
-            "Wrong pattern. Try again.";
+    activeCleanup = function () {
+        doorsBox.onclick = null;
+        doorsBox.innerHTML = "";
+        question.innerHTML = "";
+    };
 
-        patternAnswer = [];
+    async function attempt() {
 
-        selectedPattern.textContent = "";
+        const puzzle = nextDoorPuzzle();
 
-        const buttons =
-            document.querySelectorAll(".pattern-option");
+        question.innerHTML =
+            '<span class="q-rule">' + escapeHtml(puzzle.rule) + '</span>' +
+            '<span class="q-main">' + escapeHtml(puzzle.question) + '</span>';
 
-        buttons.forEach(function(button) {
+        doorsBox.innerHTML = "";
 
-            button.classList.remove("selected");
-            button.disabled = false;
+        ["left", "right"].forEach(function (side) {
 
+            const door = document.createElement("button");
+
+            door.type = "button";
+            door.className = "door" +
+                (puzzle.colors ? " is-" + puzzle.colors[side] : "");
+            door.dataset.side = side;
+            door.setAttribute("aria-label", side + " door: " + puzzle.plates[side]);
+            door.innerHTML =
+                '<span class="door-plate">' + escapeHtml(puzzle.plates[side]) + '</span>' +
+                '<span class="door-leaf"><i class="door-knob"></i></span>';
+
+            doorsBox.appendChild(door);
         });
 
+        message.textContent = "One door leads out.";
+
+        startClock();
+
+        const side = await new Promise(function (resolve) {
+
+            doorsBox.onclick = function (event) {
+
+                const door = event.target.closest(".door");
+
+                if (!door || doorsBox.classList.contains("locked")) return;
+
+                doorsBox.classList.add("locked");
+
+                resolve(door.dataset.side);
+            };
+        });
+
+        if (id !== runId) return null;
+
+        pauseClock();
+
+        const chosen = doorsBox.querySelector('[data-side="' + side + '"]');
+
+        const correct = side === puzzle.answer;
+
+        chosen.classList.add(correct ? "open" : "wrong");
+
+        if (!correct) {
+            message.textContent = "WRONG DOOR.";
+            doorsBox.querySelector('[data-side="' + puzzle.answer + '"]')
+                .classList.add("reveal");
+        } else {
+            message.textContent = "The door opens.";
+        }
+
+        await sleep(correct ? 1100 : 1600);
+
+        doorsBox.classList.remove("locked");
+
+        return correct;
     }
 
-});
-patternResultContinue.addEventListener(
-    "click",
-    function() {
+    (async function loop() {
 
-        patternResultScreen.style.display =
-            "none";
+        let attemptNo = 0;
 
-        psychoScreen.style.display =
-            "block";
+        while (id === runId) {
 
-        startTwistDialogue();
+            attemptNo++;
 
-    }
-);
-function startTwistDialogue() {
+            stat.textContent = "ATTEMPT " + attemptNo;
 
-    psychoScreen.dataset.twist = "true";
+            const ok = await attempt();
 
-    psychoName.textContent = "PSYCHO";
+            if (id !== runId || ok === null) return;
 
-    psychoName.textContent = "PSYCHO";
+            if (ok) {
+                completeLevel(5);
+                return;
+            }
+        }
 
-    dialogues = [
-
-        "You made it.",
-
-        "All five challenges.",
-
-        "You probably thought this was the end.",
-
-        "I told you the first person to finish would be released.",
-
-        "That was the first lie.",
-
-        "There was never a first place.",
-
-        "There was never a second place.",
-
-        "There was only one final test.",
-
-        "And this one isn't about intelligence.",
-
-        "It's about time.",
-
-        "Let's see how well you can control it."
-
-    ];
-
-    dialogueIndex = 0;
-
-    showDialogue(dialogues[dialogueIndex]);
-
+    })();
 }
+
+// =====================================================
+// FINAL CHALLENGE: stop the clock at 10.00
+// =====================================================
+
+let finalTargetTime = 10;
+let finalStartTime = 0;
+let finalTimerInterval = null;
+let finalAccuracy = 0;
+
+function startFinalFlow() {
+
+    if (save.twistSeen) {
+        startFinalChallenge();
+    } else {
+        startTwistDialogue();
+    }
+}
+
 function startFinalChallenge() {
 
-    finalScreen.style.display = "block";
+    stopLevel();
+
+    showScreen("final-screen");
+
+    setTopButton("levels");
 
     finalTargetTime = 10;
 
     finalTarget.textContent =
-        "TARGET: " +
-        finalTargetTime.toFixed(2) +
-        " SECONDS";
+        "TARGET: " + finalTargetTime.toFixed(2) + " SECONDS";
 
-    finalTimer.textContent =
-        "0.00";
+    finalTimer.textContent = "0.00";
 
-    finalMessage.textContent =
-        "Stop the clock as close to the target as possible.";
+    finalMessage.textContent = "Stop the clock as close to the target as possible.";
 
     finalStart.style.display = "block";
     finalStop.style.display = "none";
 
     clearInterval(finalTimerInterval);
-
 }
-finalStart.addEventListener("click", function() {
+
+finalStart.addEventListener("click", function () {
 
     finalStart.style.display = "none";
     finalStop.style.display = "block";
 
-    finalMessage.textContent =
-        "STOP THE CLOCK AT THE TARGET.";
+    finalMessage.textContent = "STOP THE CLOCK AT THE TARGET.";
 
-    finalStartTime =
-        performance.now();
+    finalStartTime = performance.now();
 
-    finalTimerInterval =
-        setInterval(function() {
+    finalTimerInterval = setInterval(function () {
 
-            const elapsed =
-                (performance.now() -
-                    finalStartTime) / 1000;
+        const elapsed = (performance.now() - finalStartTime) / 1000;
 
-            finalTimer.textContent =
-                elapsed.toFixed(2);
+        finalTimer.textContent = elapsed.toFixed(2);
 
-        }, 10);
-
+    }, 10);
 });
-finalStop.addEventListener("click", function() {
+
+finalStop.addEventListener("click", function () {
 
     clearInterval(finalTimerInterval);
 
-    const finalTime =
-        (performance.now() -
-            finalStartTime) / 1000;
+    const finalTime = (performance.now() - finalStartTime) / 1000;
 
-    finalTimer.textContent =
-        finalTime.toFixed(2);
+    finalTimer.textContent = finalTime.toFixed(2);
 
     finalStart.style.display = "none";
     finalStop.style.display = "none";
 
-    const difference =
-        Math.abs(finalTime - finalTargetTime);
+    setTopButton(null);
+
+    const difference = Math.abs(finalTime - finalTargetTime);
+
     finalAccuracy = parseFloat(difference.toFixed(2));
 
+    finalMessage.textContent =
+        "STOPPED: " + finalTime.toFixed(2) +
+        " SECONDS | ACCURACY: " + finalAccuracy.toFixed(2) + " SECONDS";
+
     if (difference <= 0.05) {
-        playerProgress.level1Completed = true;
-playerProgress.level2Unlocked = true;
 
-localStorage.setItem(
-    "lastSecondProgress",
-    JSON.stringify(playerProgress)
-);
-    
+        save.finalDone = true;
+        save.finalAccuracy = finalAccuracy;
+        persist();
 
-    finalMessage.textContent =
-        "STOPPED: " + finalTime.toFixed(2) +
-        " SECONDS | ACCURACY: " + finalAccuracy.toFixed(2) + " SECONDS";
+        saveLeaderboardScore();
 
-    console.log("5-CHALLENGE TOTAL:", totalChallengeTime.toFixed(2), "seconds");
-    console.log("FINAL RESULT: PLAYER WINS", finalTime.toFixed(2));
+        setTimeout(startWinEnding, 2500);
 
-    setTimeout(function() {
-        startWinEnding();
-    }, 2500);
+    } else {
 
-} else {
-
-    finalMessage.textContent =
-        "STOPPED: " + finalTime.toFixed(2) +
-        " SECONDS | ACCURACY: " + finalAccuracy.toFixed(2) + " SECONDS";
-
-    console.log("FINAL RESULT: PSYCHO WINS", finalTime.toFixed(2));
-
-    setTimeout(function() {
-        startLoseEnding();
-    }, 2500);
-}
-
+        setTimeout(startLoseEnding, 2500);
+    }
 });
-function resetPlayerScore() {
 
-    memoryTime = 0;
-    wordTime = 0;
-    observationTime = 0;
-    logicTime = 0;
-    patternTime = 0;
+// =====================================================
+// LEADERBOARD
+// =====================================================
 
-    finalAccuracy = 0;
-    totalChallengeTime = 0;
-
-}
-// =========================
-// FINAL ENDING DIALOGUES
-// =========================
-
-function startLoseEnding() {
-    finalScreen.style.display = "none";
-    psychoScreen.dataset.ending = "true";
-
-    psychoScreen.style.display = "block";
-
-    psychoName.textContent = "PSYCHO";
-
-    dialogues = [
-
-        "You missed.",
-
-        "But... I understand.",
-
-        "You know what that feels like, don't you?",
-
-        "Being almost good enough.",
-
-        "Being a little too slow.",
-
-        "They used to laugh at me for the same thing.",
-
-        "They called me useless.",
-
-        "Maybe that's why I chose you.",
-
-        "Because you're like me.",
-
-        "Maybe you were never supposed to win."
-
-    ];
-
-    dialogueIndex = 0;
-
-    showDialogue(dialogues[dialogueIndex]);
-
-}
-
-
-function startWinEnding() {
-    finalScreen.style.display = "none";
-    psychoScreen.dataset.ending = "true";
-
-    psychoScreen.style.display = "block";
-
-    psychoName.textContent = "PSYCHO";
-
-    dialogues = [
-
-        "You did it.",
-
-        "You actually hit the target.",
-
-        "Perfect.",
-
-        "Do you know what I hate about people like you?",
-
-        "You make it look easy.",
-
-        "You succeed where I failed.",
-
-        "You remind me of everything I could never become.",
-
-        "I don't want to watch you walk away.",
-
-        "So congratulations.",
-
-        "You won the game.",
-
-        "But you don't get to leave."
-
-    ];
-
-    dialogueIndex = 0;
-
-    showDialogue(dialogues[dialogueIndex]);
-
-}
 async function saveLeaderboardScore() {
 
-    const { data, error } = await supabaseClient
+    if (save.scoreSaved) return;
+
+    const row = {
+        name: save.name,
+        gender: save.gender.toUpperCase(),
+        total_time: Number(totalTime().toFixed(2)),
+        accuracy: Number(finalAccuracy.toFixed(2)),
+        missed: totalMissed()
+    };
+
+    let result = await supabaseClient.from("leaderboard").insert(row).select();
+
+    // The table may not have a "missed" column yet: save without it
+    if (result.error) {
+
+        const withoutMissed = Object.assign({}, row);
+
+        delete withoutMissed.missed;
+
+        result = await supabaseClient
+            .from("leaderboard").insert(withoutMissed).select();
+    }
+
+    if (result.error) {
+        console.error("LEADERBOARD SAVE ERROR:", result.error);
+        return;
+    }
+
+    save.scoreSaved = true;
+    persist();
+}
+
+async function displayLeaderboard() {
+
+    const entries = $("leaderboard-entries");
+
+    entries.innerHTML =
+        "<p style='text-align:center; padding:30px;'>LOADING...</p>";
+
+    // Fewest misses first, then fastest, then most accurate
+    let result = await supabaseClient
         .from("leaderboard")
-        .insert({
-            name: playerName,
-            gender: playerGender.toUpperCase(),
-            total_time: Number(totalChallengeTime.toFixed(2)),
-            accuracy: Number((level2Misses + finalAccuracy).toFixed(2))
-        })
-        .select();
+        .select("name, gender, total_time, accuracy, missed")
+        .order("missed", { ascending: true })
+        .order("total_time", { ascending: true })
+        .order("accuracy", { ascending: true })
+        .limit(100);
 
-    if (error) {
+    // No "missed" column yet: fall back to the old ranking
+    if (result.error) {
 
-        console.error(
-            "LEADERBOARD SAVE ERROR:",
-            error
-        );
+        result = await supabaseClient
+            .from("leaderboard")
+            .select("name, gender, total_time, accuracy")
+            .order("total_time", { ascending: true })
+            .order("accuracy", { ascending: true })
+            .limit(100);
+    }
+
+    if (result.error) {
+
+        console.error("LEADERBOARD LOAD ERROR:", result.error);
+
+        entries.innerHTML =
+            "<p style='text-align:center; padding:30px;'>FAILED TO LOAD LEADERBOARD</p>";
 
         return;
     }
 
-    console.log(
-        "LEADERBOARD SCORE SAVED:",
-        data
-    );
+    entries.innerHTML = "";
+
+    result.data.forEach(function (player, index) {
+
+        const entry = document.createElement("div");
+
+        entry.classList.add("leaderboard-entry");
+
+        const missed = player.missed === undefined || player.missed === null ?
+            "-" : String(player.missed);
+
+        entry.innerHTML =
+            '<span class="leaderboard-rank">' + (index + 1) + '</span>' +
+            '<span>' + escapeHtml(player.name) + '</span>' +
+            '<span>' + escapeHtml(player.gender) + '</span>' +
+            '<span class="leaderboard-time">' +
+                Number(player.total_time).toFixed(2) + 's</span>' +
+            '<span class="leaderboard-missed">' + escapeHtml(missed) + '</span>' +
+            '<span class="leaderboard-accuracy">' +
+                Number(player.accuracy).toFixed(2) + 's</span>';
+
+        entries.appendChild(entry);
+    });
 }
-restartGameBtn.addEventListener(
-    "click",
-    function() {
 
-        restartConfirm.style.display =
-            "flex";
+function openLeaderboard() {
 
-        // Stop every challenge timer
-        clearInterval(memoryTimerInterval);
-        clearInterval(wordCountdown);
-        clearInterval(observationTimerInterval);
-        clearInterval(logicTimerInterval);
-        clearInterval(patternTimerInterval);
-        clearInterval(finalTimerInterval);
+    stopLevel();
 
-    }
-);
+    clearInterval(finalTimerInterval);
 
+    showScreen("leaderboard-screen");
 
-restartCancelBtn.addEventListener(
-    "click",
-    function() {
+    setTopButton(null);
 
-        restartConfirm.style.display =
-            "none";
+    displayLeaderboard();
+}
 
-    }
-);
-restartConfirmBtn.addEventListener(
-    "click",
-    function() {
+$("leaderboard-back").addEventListener("click", goTitle);
 
-        restartConfirm.style.display =
-            "none";
+$("start-leaderboard-btn").addEventListener("click", openLeaderboard);
 
-        // Reset challenge scores
-        resetPlayerScore();
-        psychoScreen.dataset.twist = "false";
-        psychoScreen.dataset.ending = "false";
+// Save the running attempt's time if the page is closed mid-level
+window.addEventListener("pagehide", pauseClock);
 
-        // Hide every game screen
-        startScreen.style.display = "none";
-        memoryScreen.style.display = "none";
-        memoryResultScreen.style.display = "none";
-        wordScreen.style.display = "none";
-        wordResultScreen.style.display = "none";
-        observationScreen.style.display = "none";
-        observationResultScreen.style.display = "none";
-        logicScreen.style.display = "none";
-        logicResultScreen.style.display = "none";
-        patternScreen.style.display = "none";
-        patternResultScreen.style.display = "none";
-        psychoScreen.style.display = "none";
-        finalScreen.style.display = "none";
-        leaderboardScreen.style.display = "none";
+// ---------- START ----------
 
-        // Start Challenge 1 again
-        startMemoryChallenge();
-
-    }
-);
-
+refreshStartScreen();
 
 // =====================================================
-// KEYBOARD: ENTER / SPACE press the main button
+// KEYBOARD: ENTER / SPACE press the main button,
+// UP / DOWN move through the menus
 // =====================================================
 
 (function () {
@@ -3734,11 +2281,8 @@ restartConfirmBtn.addEventListener(
         "name-screen": "continue-btn",
         "school-screen": "enter-school-btn",
         "hallway-screen": "hallway-continue",
-        "memory-result-screen": "result-continue",
-        "word-result-screen": "word-result-continue",
-        "observation-result-screen": "observation-result-continue",
-        "logic-result-screen": "logic-result-continue",
-        "pattern-result-screen": "pattern-result-continue"
+        "levels-screen": "levels-continue",
+        "level-result-screen": "level-result-next"
     };
 
     // Buttons this handler controls. If one of these still has
@@ -3746,8 +2290,8 @@ restartConfirmBtn.addEventListener(
     // press is not counted twice.
     const MANAGED = [
         "psycho-next", "psycho-skip", "final-start", "final-stop"
-    ].concat(Object.keys(MAIN_BUTTON).map(function (id) {
-        return MAIN_BUTTON[id];
+    ].concat(Object.keys(MAIN_BUTTON).map(function (key) {
+        return MAIN_BUTTON[key];
     }));
 
     function isShown(element) {
@@ -3757,10 +2301,8 @@ restartConfirmBtn.addEventListener(
 
     function currentScreenElement() {
 
-        const sections = document.querySelectorAll("#game > section");
-
-        for (let i = 0; i < sections.length; i++) {
-            if (isShown(sections[i])) return sections[i];
+        for (let i = 0; i < screens.length; i++) {
+            if (isShown(screens[i])) return screens[i];
         }
 
         return null;
@@ -3768,9 +2310,44 @@ restartConfirmBtn.addEventListener(
 
     document.addEventListener("keydown", function (event) {
 
-        // ESC closes the restart box
+        // ESC closes the confirm box
         if (event.key === "Escape" && isShown(restartConfirm)) {
-            document.getElementById("restart-cancel-btn").click();
+            $("restart-cancel-btn").click();
+            return;
+        }
+
+        if (event.ctrlKey || event.altKey || event.metaKey) return;
+
+        // UP / DOWN: move between the menu rows
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+
+            if (isShown(restartConfirm)) return;
+
+            const screen = currentScreenElement();
+
+            if (screen === null ||
+                (screen.id !== "start-screen" && screen.id !== "levels-screen")) {
+                return;
+            }
+
+            const items = Array.from(screen.querySelectorAll(".menu-item"))
+                .filter(function (item) { return isShown(item) && !item.hidden; });
+
+            if (items.length === 0) return;
+
+            event.preventDefault();
+
+            let index = items.indexOf(document.activeElement);
+
+            // Nothing focused yet: the first row already looks selected
+            if (index === -1) index = 0;
+
+            index += event.key === "ArrowDown" ? 1 : -1;
+
+            index = (index + items.length) % items.length;
+
+            items[index].focus();
+
             return;
         }
 
@@ -3779,17 +2356,13 @@ restartConfirmBtn.addEventListener(
 
         if (!isEnter && !isSpace) return;
 
-        if (event.ctrlKey || event.altKey || event.metaKey) return;
-
         // Holding the key down must not press twice
         if (event.repeat) {
-            if (isShown(document.getElementById("final-stop"))) {
-                event.preventDefault();
-            }
+            if (isShown(finalStop)) event.preventDefault();
             return;
         }
 
-        // The restart box has its own buttons
+        // The confirm box has its own buttons
         if (isShown(restartConfirm)) return;
 
         const active = document.activeElement;
@@ -3800,7 +2373,7 @@ restartConfirmBtn.addEventListener(
             if (!(isEnter && active.id === "player-name")) return;
         }
 
-        // Any other focused button (answers, SUBMIT, SOUND...) keeps
+        // Any other focused button (cards, doors, SOUND...) keeps
         // its normal keyboard behaviour
         if (tag === "BUTTON" && MANAGED.indexOf(active.id) === -1) return;
 
@@ -3836,7 +2409,7 @@ restartConfirmBtn.addEventListener(
 
         } else if (MAIN_BUTTON[screen.id]) {
 
-            target = document.getElementById(MAIN_BUTTON[screen.id]);
+            target = $(MAIN_BUTTON[screen.id]);
         }
 
         if (target === null || !isShown(target) || target.disabled) return;

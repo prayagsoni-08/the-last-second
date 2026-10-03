@@ -22,24 +22,130 @@
 
             <div class="brand" aria-label="Nﾒ">Nﾒ</div>
 
-            <p class="subtitle">
-                A psychological puzzle game
-            </p>
+            <div class="briefing">
 
-            <h1>
-                THE LAST SECOND
-            </h1>
+                <div class="briefing-menu">
 
-            <p class="tagline">
-                Everyone gets the same amount of time.
-            </p>
+                    <p class="subtitle">
+                        A psychological puzzle game
+                    </p>
 
-            <button id="start-btn">
-                START GAME
-            </button>
-            <button id="start-leaderboard-btn">
-                LEADERBOARD
-            </button>
+                    <h1>
+                        THE LAST <br>SECOND
+                    </h1>
+
+                    <nav class="menu" aria-label="Main menu">
+
+                        <button id="start-btn" class="menu-item">
+                            <span class="menu-icon"></span>
+                            <span id="start-btn-label">START GAME</span>
+                        </button>
+
+                        <button id="new-player-btn" class="menu-item" hidden>
+                            <span class="menu-icon"></span>
+                            <span>NEW PLAYER</span>
+                        </button>
+
+                        <button id="start-leaderboard-btn" class="menu-item">
+                            <span class="menu-icon"></span>
+                            <span>LEADERBOARD</span>
+                        </button>
+
+                    </nav>
+
+                    <p class="briefing-text" id="briefing-text">
+                        Someone called you intelligent. Five challenges,
+                        each with its own clock. Your time is being recorded.
+                    </p>
+
+                    <p class="tagline">
+                        Everyone gets the same amount of time.
+                    </p>
+
+                </div>
+
+                <div class="board" aria-hidden="true">
+
+                    <svg class="wall-lines" viewBox="0 0 100 80" preserveAspectRatio="none">
+                        <path d="M0 18 L100 30 M0 52 L100 40 M22 0 L34 80 M70 0 L62 80 M0 70 L100 64" />
+                    </svg>
+
+                    <div class="piece floorplan">
+                        <svg viewBox="0 0 100 120">
+                            <rect class="fp-wall" x="6" y="10" width="88" height="100" />
+                            <line class="fp-wall" x1="6" y1="50" x2="94" y2="50" />
+                            <line class="fp-wall" x1="6" y1="70" x2="94" y2="70" />
+                            <line class="fp-wall" x1="36" y1="10" x2="36" y2="50" />
+                            <line class="fp-wall" x1="66" y1="10" x2="66" y2="50" />
+                            <line class="fp-wall" x1="50" y1="70" x2="50" y2="110" />
+                            <text class="fp-text" x="21" y="34" text-anchor="middle">01</text>
+                            <text class="fp-text" x="51" y="34" text-anchor="middle">02</text>
+                            <text class="fp-text" x="80" y="34" text-anchor="middle">03</text>
+                            <text class="fp-text" x="28" y="94" text-anchor="middle">04</text>
+                            <text class="fp-text" x="72" y="94" text-anchor="middle">05</text>
+                            <text class="fp-small" x="50" y="63" text-anchor="middle">HALLWAY</text>
+                            <path class="fp-red" d="M0 60 L60 60 L72 60 L72 70" />
+                            <circle class="fp-red" cx="72" cy="90" r="14" />
+                            <path class="fp-red" d="M66 84 L78 96 M78 84 L66 96" />
+                        </svg>
+                    </div>
+
+                    <div class="piece tape">PSYCHO</div>
+
+                    <div class="piece dossier">
+                        <i class="clip clip-a"></i><i class="clip clip-b"></i>
+                        <div class="dossier-photo">
+                            <div class="dossier-head"></div>
+                            <div class="dossier-body"></div>
+                        </div>
+                        <p class="dossier-line">SUBJECT: UNKNOWN</p>
+                        <p class="dossier-line">STATUS: WATCHING</p>
+                    </div>
+
+                    <div class="piece paper news">
+                        <p class="news-head">NO ONE LEAVES BEFORE MIDNIGHT</p>
+                        <p class="news-sub">School stays open all night</p>
+                        <i class="news-img"></i>
+                        <i class="news-lines"></i>
+                    </div>
+
+                    <div class="piece stopwatch">
+                        <svg viewBox="0 0 100 100">
+                            <rect x="42" y="2" width="16" height="9" rx="2" fill="#3a2024" />
+                            <circle cx="50" cy="56" r="42" fill="#140b0c" stroke="#f6f3f3" stroke-width="3" />
+                            <g stroke="#b0a3a4" stroke-width="2">
+                                <path d="M50 18 V24 M82 56 H76 M50 94 V88 M18 56 H24" />
+                            </g>
+                            <path d="M50 56 L47 24" stroke="#e0222b" stroke-width="3" stroke-linecap="round" />
+                            <circle cx="50" cy="56" r="4" fill="#e0222b" />
+                            <text x="50" y="80" text-anchor="middle" font-size="11"
+                                  fill="#ff5a5f" style="font-family:var(--font-digits)">10.00</text>
+                        </svg>
+                    </div>
+
+                    <div class="piece note">11:47 pm</div>
+
+                    <svg class="strings" viewBox="0 0 100 80">
+                        <path d="M19 20 L52 11 L84 15" />
+                        <path d="M52 11 L77 55" />
+                        <path d="M22 63 L77 55" />
+                    </svg>
+
+                    <i class="pin" style="left:19%;top:25%"></i>
+                    <i class="pin" style="left:52%;top:14%"></i>
+                    <i class="pin" style="left:84%;top:19%"></i>
+                    <i class="pin" style="left:77%;top:69%"></i>
+                    <i class="pin" style="left:22%;top:79%"></i>
+
+                </div>
+
+                <p class="briefing-hints">
+                    <span><kbd>ENTER</kbd> Select</span>
+                    <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> Move</span>
+                    <span><kbd>M</kbd> Sound</span>
+                </p>
+
+            </div>
 
         </section>
         <section id="character-screen">
@@ -143,247 +249,6 @@
     </div>
 
 </section>
-
-<!-- LEVEL SELECT -->
-
-<section id="level-select-screen">
-
-    <div class="level-select-container">
-
-        <p class="subtitle">CHOOSE YOUR LEVEL</p>
-
-        <h2>THE LAST SECOND</h2>
-
-        <div class="level-options">
-
-            <button id="level-1-btn">
-                LEVEL 1
-                <span id="level-1-status">THE TEST</span>
-            </button>
-
-            <button id="level-2-btn">
-                LEVEL 2
-                <span id="level-2-status">LOCKED</span>
-            </button>
-
-        </div>
-
-        <button id="reset-progress-btn">
-            RESET ALL PROGRESS
-        </button>
-
-    </div>
-
-</section>
-<section id="level-2-screen">
-
-    <div class="level2-container">
-
-        <p class="challenge-label">CHALLENGE 01</p>
-
-        <h1>ROBOT HUNT</h1>
-
-        <p id="level2-message">
-            Shoot every robot before it disappears.
-        </p>
-
-        <div class="level2-instructions">
-
-            <p>🤖 A robot will appear somewhere in the arena.</p>
-
-            <p>🎯 Click the robot before it disappears.</p>
-
-            <p>⚠️ You get only one chance per robot.</p>
-
-            
-
-            <p>🏆 Destroy all 10 robots to complete the challenge.</p>
-
-            <p>⏱️ Your time starts when you press START.</p>
-
-        </div>
-
-        <button id="level2-start-btn">
-            START CHALLENGE 01
-        </button>
-
-    </div>
-
-</section>
-<section id="robot-hunt-screen">
-    <div class="robot-hunt-container">
-
-        <p class="challenge-label">LEVEL 2 — CHALLENGE 01</p>
-        <h1>ROBOT HUNT</h1>
-
-        <p id="robot-hunt-message">
-            Shoot every robot before it disappears.
-        </p>
-
-        <p id="robot-hunt-timer">TIME: 0.00</p>
-
-        <div id="robot-arena"></div>
-        <button id="robot-restart-btn" style="display: none;">
-    RESTART 
-</button>
-
-    </div>
-</section>
-<section id="card-screen">
-
-    <div class="card-container">
-
-        <p class="challenge-label">CHALLENGE 02</p>
-
-        <h1>CARD TRACK</h1>
-
-        <p id="card-message">
-            Watch the card carefully.
-        </p>
-
-        <div class="card-instructions">
-
-    <p>🃏 One card will be shown.</p>
-
-    <p>👀 Memorize it carefully.</p>
-
-    <p>🔀 The card will flip and shuffle with the others.</p>
-
-    <p>🧠 Follow its movement.</p>
-
-    <p>🎯 Select the card you think is yours.</p>
-
-
-        </div>
-
-        <button id="card-start-btn">
-            START CHALLENGE 02
-        </button>
-        <div id="card-arena"></div>
-
-<p id="card-timer">
-    TIME: 0.00
-</p>
-
-    </div>
-
-</section>
-<section id="pattern9-screen">
-    <div class="pattern9-container">
-
-        <p class="challenge-label">CHALLENGE 03</p>
-
-        <h1>THE NINE DOTS</h1>
-
-        <p id="pattern9-message">
-            Memorize the pattern.
-        </p>
-        <div class="pattern9-instructions">
-    <p>🔵 9 dots will appear like a phone lock screen.</p>
-    <p>👀 Watch the pattern carefully.</p>
-    <p>🧠 Remember the exact order.</p>
-    <p>🎯 Recreate the pattern by clicking the dots.</p>
-    <p>⏱️ You have limited time to complete it.</p>
-    
-</div>
-
-        <div id="pattern9-grid">
-            <button class="pattern-dot" data-dot="1"></button>
-            <button class="pattern-dot" data-dot="2"></button>
-            <button class="pattern-dot" data-dot="3"></button>
-
-            <button class="pattern-dot" data-dot="4"></button>
-            <button class="pattern-dot" data-dot="5"></button>
-            <button class="pattern-dot" data-dot="6"></button>
-
-            <button class="pattern-dot" data-dot="7"></button>
-            <button class="pattern-dot" data-dot="8"></button>
-            <button class="pattern-dot" data-dot="9"></button>
-        </div>
-
-        <p id="pattern9-timer">
-            TIME: 0.00
-        </p>
-
-        <button id="pattern9-start-btn">
-            START CHALLENGE 03
-        </button>
-
-    </div>
-</section>
-<section id="grid-screen">
-    <div class="grid-container">
-
-        <p class="challenge-label">CHALLENGE 04</p>
-
-        <h1>THE GRID</h1>
-
-        <p id="grid-message">
-            Hit the glowing square.
-        </p>
-
-        <div class="grid-instructions">
-            <p>🟦 One square will glow at a time.</p>
-            <p>🎯 Click the glowing square.</p>
-            <p>⚡ The speed increases as you progress.</p>
-            <p>❌ Misses will be counted.</p>
-            <p>🏆 Survive the entire grid to continue.</p>
-        </div>
-
-        <div id="reaction-grid">
-        </div>
-
-        <p id="grid-timer">
-            TIME: 0.00
-        </p>
-
-        <p id="grid-misses">
-            MISSES: 0
-        </p>
-
-        <button id="grid-start-btn">
-            START CHALLENGE 04
-        </button>
-
-    </div>
-</section>
-<section id="door-screen">
-    <div class="door-container">
-
-        <p class="challenge-label">CHALLENGE 05</p>
-
-        <h1>THE TWO DOORS</h1>
-
-        <p id="door-message">
-            Choose the correct door.
-        </p>
-
-        <div class="door-instructions">
-            <p>🚪 Two doors stand before you.</p>
-            <p>🧠 Read the question carefully.</p>
-            <p>🔑 Choose the door that matches the answer.</p>
-            <p>⏱️ Your time will be recorded.</p>
-            <p>❌ Choose wrong and LEVEL 2 restarts.</p>
-        </div>
-
-        <div id="door-question"></div>
-
-        <div id="door-options">
-            <button id="door-left">DOOR I</button>
-            <button id="door-right">DOOR II</button>
-        </div>
-
-        <p id="door-timer">
-            TIME: 0.00
-        </p>
-
-        <button id="door-start-btn">
-            START CHALLENGE 05
-        </button>
-
-    </div>
-</section>
-
 <section id="psycho-screen">
 
     <div class="projector-noise"></div>
@@ -421,262 +286,207 @@
     </div>
 
 </section>
-<!-- CHALLENGE 1: MEMORY TEST -->
-<section id="memory-screen">
 
-    <div class="memory-container">
+<!-- THE BOARD: LEVEL SELECT -->
+<section id="levels-screen">
+
+    <div class="briefing levels">
+
+        <div class="briefing-menu">
+
+            <p class="subtitle" id="levels-case">CASE FILE</p>
+
+            <h1>THE <br>BOARD</h1>
+
+            <nav class="menu" aria-label="Board menu">
+
+                <button id="levels-continue" class="menu-item">
+                    <span class="menu-icon"></span>
+                    <span id="levels-continue-label">CONTINUE</span>
+                </button>
+
+                <button id="levels-reset" class="menu-item">
+                    <span class="menu-icon"></span>
+                    <span>RESET PROGRESS</span>
+                </button>
+
+                <button id="levels-menu" class="menu-item">
+                    <span class="menu-icon"></span>
+                    <span>MAIN MENU</span>
+                </button>
+
+            </nav>
+
+            <p class="briefing-text" id="levels-summary"></p>
+
+            <p class="levels-note" id="levels-note" aria-live="polite"></p>
+
+        </div>
+
+        <div class="levels-board" id="levels-board"></div>
+
+        <p class="briefing-hints">
+            <span><kbd>ENTER</kbd> Continue</span>
+            <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> Move</span>
+            <span><kbd>M</kbd> Sound</span>
+        </p>
+
+    </div>
+
+</section>
+
+<!-- CHALLENGE 1: ROBOTS -->
+<section id="robots-screen">
+
+    <div class="challenge-container">
 
         <p class="challenge-label">CHALLENGE 01</p>
 
-        <h1>MEMORY TEST</h1>
+        <h1>ROBOTS</h1>
 
-        <p id="memory-message">
-            Remember the sequence.
+        <p class="challenge-hint" id="robots-message">
+            Shoot every robot before it disappears.
         </p>
 
-        <div id="memory-sequence"></div>
+        <div class="stat-row">
+            <span id="robots-stat">SHOT 0 / 12</span>
+            <span id="robots-time">TIME 0.0</span>
+        </div>
 
-<p class="selected-label">YOUR ANSWER</p>
-
-<div id="selected-sequence"></div>
-
-<div id="memory-options"></div>
-
-        <p id="memory-timer"></p>
-
-        <button id="memory-submit">
-            SUBMIT
-        </button>
+        <div class="arena" id="robots-arena"></div>
 
     </div>
 
 </section>
-<!-- CHALLENGE 1 RESULT -->
-<section id="memory-result-screen">
 
-    <div class="result-container">
+<!-- CHALLENGE 2: CARDS -->
+<section id="cards-screen">
 
-        <p class="result-label">CHALLENGE 01</p>
-
-        <h1>COMPLETE</h1>
-
-        <p id="result-message">
-            Interesting...
-        </p>
-
-        <p id="result-time"></p>
-
-        <button id="result-continue">
-            START CHALLENGE 02
-        </button>
-
-    </div>
-
-</section>
-<!-- CHALLENGE 2: WORD GUESS -->
-<section id="word-screen">
-
-    <div class="word-container">
+    <div class="challenge-container">
 
         <p class="challenge-label">CHALLENGE 02</p>
 
-        <h1>WORD GUESS</h1>
+        <h1>CARDS</h1>
 
-        <p id="word-clue">
-            Psycho has a question for you...
+        <p class="challenge-hint" id="cards-message">
+            Watch the card. Find it again.
         </p>
 
-        <div id="word-display">
-            _ _ _ _ _
+        <div class="stat-row">
+            <span id="cards-stat">ATTEMPT 1</span>
+            <span id="cards-time">TIME 0.0</span>
         </div>
 
-        <input
-            type="text"
-            id="word-input"
-            placeholder="ENTER YOUR ANSWER"
-            autocomplete="off"
-        >
-
-        <p id="word-timer"></p>
-
-        <p id="word-message"></p>
-
-        <button id="word-submit">
-            SUBMIT
-        </button>
+        <div class="cards-row" id="cards-row"></div>
 
     </div>
 
 </section>
-<!-- CHALLENGE 2 RESULT -->
-<section id="word-result-screen">
 
-    <div class="result-container">
+<!-- CHALLENGE 3: PATTERN LOCK -->
+<section id="lock-screen">
 
-        <p class="result-label">CHALLENGE 02</p>
-
-        <h1>COMPLETE</h1>
-
-        <p id="word-result-message">
-            Not bad...
-        </p>
-
-        <p id="word-result-time"></p>
-
-        <button id="word-result-continue">
-            START CHALLENGE 03
-        </button>
-
-    </div>
-
-</section>
-<!-- CHALLENGE 3: OBSERVATION TEST -->
-<section id="observation-screen">
-
-    <div class="observation-container">
+    <div class="challenge-container">
 
         <p class="challenge-label">CHALLENGE 03</p>
 
-        <h1>OBSERVATION</h1>
+        <h1>PATTERN LOCK</h1>
 
-        <p id="observation-message">
-            Look carefully. You won't see it twice.
+        <p class="challenge-hint" id="lock-message">
+            Watch the pattern. Draw it before time runs out.
         </p>
 
-        <div id="observation-scene"></div>
+        <div class="stat-row">
+            <span id="lock-stat">ATTEMPT 1</span>
+            <span id="lock-time">TIME 0.0</span>
+        </div>
 
-        <div id="observation-question"></div>
+        <div class="timebar" id="lock-bar"><i></i></div>
 
-        <div id="observation-options"></div>
+        <div class="lock-pad" id="lock-pad"></div>
 
-        <p id="observation-timer"></p>
-
-        <button id="observation-submit">
-            SUBMIT
-        </button>
+        <button id="lock-clear" class="small-btn" type="button">CLEAR</button>
 
     </div>
 
 </section>
-<!-- CHALLENGE 3 RESULT -->
-<section id="observation-result-screen">
 
-    <div class="result-container">
+<!-- CHALLENGE 4: GLOWING GRID -->
+<section id="grid-screen">
 
-        <p class="result-label">CHALLENGE 03</p>
-
-        <h1>COMPLETE</h1>
-
-        <p id="observation-result-message">
-            You noticed what was missing.
-        </p>
-
-        <p id="observation-result-time"></p>
-
-        <button id="observation-result-continue">
-            START CHALLENGE 04
-        </button>
-
-    </div>
-
-</section>
-<!-- CHALLENGE 4: LOGIC TEST -->
-<section id="logic-screen">
-
-    <div class="logic-container">
+    <div class="challenge-container">
 
         <p class="challenge-label">CHALLENGE 04</p>
 
-        <h1>LOGIC</h1>
+        <h1>REFLEX</h1>
 
-        <p id="logic-message">
-            Think carefully.
+        <p class="challenge-hint" id="grid-message">
+            Touch the square that glows. It gets faster.
         </p>
 
-        <div id="logic-question"></div>
+        <div class="stat-row">
+            <span id="grid-stat">ROUND 0 / 20 &middot; MISSED 0</span>
+            <span id="grid-time">TIME 0.0</span>
+        </div>
 
-        <div id="logic-options"></div>
-
-        <p id="logic-timer"></p>
-
-        <button id="logic-submit">
-            SUBMIT
-        </button>
+        <div class="grid-pad" id="grid-pad"></div>
 
     </div>
 
 </section>
-<!-- CHALLENGE 4 RESULT -->
 
-<section id="logic-result-screen">
+<!-- CHALLENGE 5: TWO DOORS -->
+<section id="doors-screen">
 
-    <div class="result-container">
-
-        <p class="result-label">CHALLENGE 04</p>
-
-        <h1>COMPLETE</h1>
-
-        <p id="logic-result-message">
-            You solved it.
-        </p>
-
-        <p id="logic-result-time"></p>
-
-        <button id="logic-result-continue">
-            START CHALLENGE 05
-        </button>
-
-    </div>
-
-</section>
-<!-- CHALLENGE 5: PATTERN RECALL -->
-
-<section id="pattern-screen">
-
-    <div class="pattern-container">
+    <div class="challenge-container wide">
 
         <p class="challenge-label">CHALLENGE 05</p>
 
-        <h1>PATTERN</h1>
+        <h1>TWO DOORS</h1>
 
-        <p id="pattern-message">
-            Remember the pattern.
+        <p class="challenge-hint" id="doors-message">
+            One door leads out. Read the question.
         </p>
 
-        <div id="pattern-display"></div>
+        <div class="stat-row">
+            <span id="doors-stat">ATTEMPT 1</span>
+            <span id="doors-time">TIME 0.0</span>
+        </div>
 
-        <div id="pattern-options"></div>
+        <div class="door-question" id="doors-question"></div>
 
-        <div id="selected-pattern"></div>
-
-        <p id="pattern-timer"></p>
-
-        <button id="pattern-submit">
-            SUBMIT
-        </button>
+        <div class="doors" id="doors"></div>
 
     </div>
 
 </section>
-<!-- CHALLENGE 5 RESULT -->
 
-<section id="pattern-result-screen">
+<!-- LEVEL RESULT (one screen for all five) -->
+<section id="level-result-screen">
 
     <div class="result-container">
 
-        <p class="result-label">CHALLENGE 05</p>
+        <p class="result-label" id="level-result-label">CHALLENGE 01</p>
 
         <h1>COMPLETE</h1>
 
-        <p id="pattern-result-message">
-            You remembered the pattern.
-        </p>
+        <p id="level-result-message">Interesting...</p>
 
-        <p id="pattern-result-time"></p>
+        <p id="level-result-time"></p>
 
-        <button id="pattern-result-continue">
-            CONTINUE
-        </button>
+        <p id="level-result-extra"></p>
+
+        <div class="result-actions">
+
+            <button id="level-result-next">
+                CONTINUE
+            </button>
+
+            <button id="level-result-levels" class="ghost">
+                BACK TO THE BOARD
+            </button>
+
+        </div>
 
     </div>
 
@@ -736,6 +546,7 @@
                 <span>NAME</span>
                 <span>BOY / GIRL</span>
                 <span>TIME TAKEN</span>
+                <span>MISSED</span>
                 <span>ACCURACY</span>
             </div>
 
@@ -752,25 +563,26 @@
     </div>
 
 </section>
-<!-- RESTART GAME -->
+<!-- TOP-RIGHT BUTTON: LEVELS (inside a challenge) / MENU (on the board) -->
 <button id="restart-game-btn">
-    RESTART
+    LEVELS
 </button>
 
-<div id="restart-confirm">
+<!-- ONE CONFIRM BOX, REUSED (reset progress, new player) -->
+<div id="restart-confirm" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
 
     <div class="restart-box">
 
-        <h2>RESTART GAME?</h2>
+        <h2 id="confirm-title">ARE YOU SURE?</h2>
 
-        <p>
-            Your current progress and time will be lost.
+        <p id="confirm-text">
+            This cannot be undone.
         </p>
 
         <div class="restart-buttons">
 
             <button id="restart-confirm-btn">
-                CONTINUE
+                YES
             </button>
 
             <button id="restart-cancel-btn">

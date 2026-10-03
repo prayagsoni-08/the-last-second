@@ -41,9 +41,10 @@
     // Which screens play which looping sound.
     // Tension plays on the title, character and name screens, stops for
     // the rain at the school, then returns in the hallway and keeps
-    // playing (without restarting) until START is pressed on the final
-    // challenge, where final.mp3 takes over. Tension comes
-    // back again for the Psycho ending scene and the leaderboard.
+    // playing (without restarting) through the board and all five
+    // challenges, until START is pressed on the final challenge, where
+    // final.mp3 takes over. Tension comes back again for the Psycho
+    // ending scene and the leaderboard.
     // Screens not listed here are silent.
     const LOOP_FOR_SCREEN = {
         // Opening screens
@@ -55,16 +56,15 @@
 
         "hallway-screen": "tension",
         "psycho-screen": "tension",
-        "memory-screen": "tension",
-        "memory-result-screen": "tension",
-        "word-screen": "tension",
-        "word-result-screen": "tension",
-        "observation-screen": "tension",
-        "observation-result-screen": "tension",
-        "logic-screen": "tension",
-        "logic-result-screen": "tension",
-        "pattern-screen": "tension",
-        "pattern-result-screen": "tension",
+
+        // The board and the five challenges
+        "levels-screen": "tension",
+        "robots-screen": "tension",
+        "cards-screen": "tension",
+        "lock-screen": "tension",
+        "grid-screen": "tension",
+        "doors-screen": "tension",
+        "level-result-screen": "tension",
 
         // Tension keeps playing here until the player presses START.
         // final.mp3 takes over at that click (see the click handler).
