@@ -2250,3 +2250,33 @@ path.fp-red:first-of-type { stroke-dasharray: 5 4; }
         transition: none;
     }
 }
+
+
+/* START PAGE: art on the left, text and start button on the right */
+@media (min-width: 52.01rem) {
+    #start-screen .briefing {
+        grid-template-columns: minmax(0, 1fr) minmax(15rem, 25rem);
+        grid-template-areas:
+            "board menu"
+            "hints hints";
+    }
+}
+
+/* CHALLENGES 06-10 */
+#quiz-screen { text-align: center; }
+#quiz-stage { display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-top: 1rem; }
+.quiz-big { font-size: clamp(1.6rem, 6vw, 2.8rem); letter-spacing: 0.15em; line-height: 1.3; min-height: 3.2rem; }
+.quiz-big.small { font-size: clamp(1.1rem, 3.4vw, 1.5rem); letter-spacing: 0.02em; max-width: 36rem; }
+.quiz-opts { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.7rem; }
+.quiz-opt { min-width: 3.4rem; font-size: 1.4rem; }
+.quiz-opt:disabled { opacity: 0.35; }
+.quiz-input { width: min(22rem, 90%); text-align: center; }
+
+/* LOSE: RESTART / BOARD */
+.retry-box {
+    position: fixed; inset: 0; z-index: 60;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1.2rem; background: rgba(0, 0, 0, 0.85); text-align: center;
+}
+.retry-box p { font-size: clamp(1.3rem, 5vw, 2rem); letter-spacing: 0.08em; margin: 0; }
+.retry-box div { display: flex; gap: 0.8rem; flex-wrap: wrap; justify-content: center; }

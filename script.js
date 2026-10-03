@@ -24,6 +24,9 @@ function sleep(ms) {
     return new Promise(function (resolve) { setTimeout(resolve, ms); });
 }
 
+const TOTAL = 10, FINAL = 11;
+function pad(n) { return n < 10 ? "0" + n : String(n); }
+
 function randInt(n) { return Math.floor(Math.random() * n); }
 
 function pick(list) { return list[randInt(list.length)]; }
@@ -125,7 +128,14 @@ function loadSave() {
             return null;
         }
 
-        return Object.assign(emptySave(), data);
+        const merged = Object.assign(emptySave(), data);
+
+        // Older saves: the final test needs all ten challenges now
+        for (let n = 1; n <= TOTAL; n++) {
+            if (!merged.levels[n]) { merged.finalDone = false; merged.twistSeen = false; }
+        }
+
+        return merged;
 
     } catch (error) {
         return null;
@@ -156,20 +166,20 @@ function clearedCount() {
 
     let count = 0;
 
-    for (let n = 1; n <= 5; n++) {
+    for (let n = 1; n <= TOTAL; n++) {
         if (isCleared(n)) count++;
     }
 
     return count;
 }
 
-function allFiveCleared() { return clearedCount() === 5; }
+function allFiveCleared() { return clearedCount() === TOTAL; }
 
 function totalTime() {
 
     let sum = 0;
 
-    for (let n = 1; n <= 5; n++) {
+    for (let n = 1; n <= TOTAL; n++) {
         if (isCleared(n)) sum += save.levels[n].time;
     }
 
@@ -183,11 +193,11 @@ function totalMissed() {
 // what the CONTINUE button should open: 1-5, 6 = final, 0 = all done
 function nextTarget() {
 
-    for (let n = 1; n <= 5; n++) {
+    for (let n = 1; n <= TOTAL; n++) {
         if (!isCleared(n)) return n;
     }
 
-    return save.finalDone ? 0 : 6;
+    return save.finalDone ? 0 : FINAL;
 }
 
 // =====================================================
@@ -233,7 +243,7 @@ $("restart-cancel-btn").addEventListener("click", function () {
 // =====================================================
 
 const DEFAULT_BRIEFING =
-    "Someone called you intelligent. Five challenges, each with " +
+    "Someone called you intelligent. Ten challenges, each with " +
     "its own clock. Your time is being recorded.";
 
 let pendingGender = "";
@@ -248,7 +258,7 @@ function refreshStartScreen() {
 
         $("briefing-text").textContent =
             "Welcome back, " + save.name + ". " +
-            clearedCount() + " of 5 challenges cleared.";
+            clearedCount() + " of 10 challenges cleared.";
 
     } else {
 
@@ -369,10 +379,10 @@ function startPsychoDialogue() {
         "You were chosen because someone called you intelligent.",
         "But intelligence is easy to measure.",
         "Let's see how useful it really is.",
-        "There will be five challenges.",
+        "There will be ten challenges.",
         "Every challenge will have its own clock.",
         "Your time will be recorded.",
-        "Finish all five challenges...",
+        "Finish all ten challenges...",
         "and you will be free."
     ];
 
@@ -393,7 +403,7 @@ function startTwistDialogue() {
 
     dialogues = [
         "You made it.",
-        "All five challenges.",
+        "All ten challenges.",
         "You probably thought this was the end.",
         "I told you the first person to finish would be released.",
         "That was the first lie.",
@@ -604,7 +614,12 @@ const LEVELS = [
     { n: 2, name: "CARDS", screen: "cards-screen" },
     { n: 3, name: "PATTERN LOCK", screen: "lock-screen" },
     { n: 4, name: "REFLEX", screen: "grid-screen" },
-    { n: 5, name: "TWO DOORS", screen: "doors-screen" }
+    { n: 5, name: "TWO DOORS", screen: "doors-screen" },
+    { n: 6, name: "MEMORY TEST", screen: "quiz-screen" },
+    { n: 7, name: "RIDDLES", screen: "quiz-screen" },
+    { n: 8, name: "OBSERVATION", screen: "quiz-screen" },
+    { n: 9, name: "LOGIC", screen: "quiz-screen" },
+    { n: 10, name: "PATTERN RECALL", screen: "quiz-screen" }
 ];
 
 const TILTS = [-2.2, 1.6, -1.2, 2, -1.8, 1];
@@ -662,8 +677,8 @@ function renderLevels() {
         card.style.setProperty("--tilt", TILTS[index % TILTS.length] + "deg");
         card.setAttribute("aria-disabled", state === "locked" ? "true" : "false");
         card.setAttribute("aria-label",
-            "Challenge " + level.n + ", " + level.name + ", " + state);
-        card.innerHTML = cardHtml("0" + level.n, level.name, state, meta);
+            "Challenge " + pad(level.n) + ", " + level.name + ", " + state);
+        card.innerHTML = cardHtml(pad(level.n), level.name, state, meta);
 
         board.appendChild(card);
     });
@@ -676,7 +691,7 @@ function renderLevels() {
 
     finalCard.type = "button";
     finalCard.className = "level-card is-final is-" + finalState;
-    finalCard.dataset.level = "6";
+    finalCard.dataset.level = String(FINAL);
     finalCard.style.setProperty("--tilt", "-0.6deg");
     finalCard.setAttribute("aria-disabled", finalState === "locked" ? "true" : "false");
     finalCard.setAttribute("aria-label", "Final test, " + finalState);
@@ -695,7 +710,7 @@ function renderLevels() {
     $("levels-case").textContent = "CASE FILE \u00b7 " + save.name.toUpperCase();
 
     let summary =
-        clearedCount() + " of 5 challenges cleared. Time so far: " +
+        clearedCount() + " of 10 challenges cleared. Time so far: " +
         totalTime().toFixed(2) + "s.";
 
     if (isCleared(4)) summary += " Missed: " + totalMissed() + ".";
@@ -706,8 +721,8 @@ function renderLevels() {
 
     $("levels-continue-label").textContent =
         target === 0 ? "LEADERBOARD" :
-        target === 6 ? "THE FINAL TEST" :
-        "CONTINUE \u00b7 CHALLENGE 0" + target;
+        target === FINAL ? "THE FINAL TEST" :
+        "CONTINUE \u00b7 CHALLENGE " + pad(target);
 
     levelNote("");
 }
@@ -727,10 +742,10 @@ function openLevels() {
 
 function openLevelCard(n) {
 
-    if (n === 6) {
+    if (n === FINAL) {
 
         if (!allFiveCleared()) {
-            levelNote("Locked. Clear all five challenges first.");
+            levelNote("Locked. Clear all ten challenges first.");
         } else if (save.finalDone) {
             levelNote("The final test is done. Reset progress to play again.");
         } else {
@@ -741,12 +756,12 @@ function openLevelCard(n) {
     }
 
     if (isCleared(n)) {
-        levelNote("Challenge 0" + n + " is already cleared.");
+        levelNote("Challenge " + pad(n) + " is already cleared.");
         return;
     }
 
     if (!isUnlocked(n)) {
-        levelNote("Locked. Clear challenge 0" + (n - 1) + " first.");
+        levelNote("Locked. Clear challenge " + pad(n - 1) + " first.");
         return;
     }
 
@@ -833,7 +848,7 @@ function pauseClock() {
 
     clockStart = null;
 
-    if (currentLevel <= 5) {
+    if (currentLevel <= TOTAL) {
         save.spent[currentLevel] =
             Number(((save.spent[currentLevel] || 0) + elapsed).toFixed(3));
         persist();
@@ -874,6 +889,8 @@ function stopLevel() {
         activeCleanup = null;
     }
 
+    document.querySelectorAll(".retry-box").forEach(function (b) { b.remove(); });
+
     pauseClock();
 
     clearInterval(liveTimer);
@@ -891,7 +908,8 @@ function enterLevel(n) {
 
     setTopButton("levels");
 
-    const starters = [startRobots, startCards, startLock, startReflex, startDoors];
+    const starters = [startRobots, startCards, startLock, startReflex, startDoors,
+        startMemory, startWord, startObserve, startLogic, startRecall];
 
     starters[n - 1]();
 }
@@ -918,7 +936,12 @@ const RESULT_MESSAGES = {
     2: "You kept your eyes on it.",
     3: "Your hand remembered.",
     4: "Fast hands.",
-    5: "You chose well."
+    5: "You chose well.",
+    6: "Your memory held.",
+    7: "Sharp mind.",
+    8: "Nothing escaped you.",
+    9: "The logic was clear.",
+    10: "Every shape in place."
 };
 
 let resultLevel = 0;
@@ -938,7 +961,7 @@ function showLevelResult(n) {
 
     const record = save.levels[n];
 
-    $("level-result-label").textContent = "CHALLENGE 0" + n;
+    $("level-result-label").textContent = "CHALLENGE " + pad(n);
     $("level-result-message").textContent = RESULT_MESSAGES[n];
     $("level-result-time").textContent =
         "TIME: " + record.time.toFixed(2) + " SECONDS";
@@ -946,12 +969,12 @@ function showLevelResult(n) {
         n === 4 ? "MISSED: " + (record.missed || 0) : "";
 
     $("level-result-next").textContent =
-        n < 5 ? "START CHALLENGE 0" + (n + 1) : "THE FINAL TEST";
+        n < TOTAL ? "START CHALLENGE " + pad(n + 1) : "THE FINAL TEST";
 }
 
 $("level-result-next").addEventListener("click", function () {
 
-    if (resultLevel < 5) {
+    if (resultLevel < TOTAL) {
         enterLevel(resultLevel + 1);
     } else {
         startFinalFlow();
@@ -989,7 +1012,7 @@ async function runCountdown(id, container) {
 // Miss one and the challenge starts again (the clock keeps running).
 // =====================================================
 
-const ROBOTS_TOTAL = 12;
+const ROBOTS_TOTAL = 18;
 
 function spawnRobot(arena, visibleMs) {
 
@@ -1100,13 +1123,17 @@ function startRobots() {
                 return;
             }
 
-            message.textContent = "A ROBOT GOT AWAY. FROM THE TOP.";
+            message.textContent = "A ROBOT GOT AWAY.";
 
             arena.classList.add("failed");
 
-            await sleep(1600);
+            await sleep(900);
 
             arena.classList.remove("failed");
+
+            if (await askRetry("A ROBOT GOT AWAY.") === "board") { openLevels(); return; }
+
+            if (id !== runId) return;
 
             message.textContent = "Shoot every robot before it disappears.";
         }
@@ -1188,9 +1215,9 @@ async function cardsAttempt(id) {
 
     message.textContent = "Watch closely...";
 
-    for (let k = 0; k < 10; k++) {
+    for (let k = 0; k < 14; k++) {
 
-        const ms = Math.round(430 - k * 22);
+        const ms = Math.max(170, Math.round(430 - k * 22));
 
         row.style.setProperty("--swap", ms + "ms");
 
@@ -1275,9 +1302,13 @@ function startCards() {
                 return;
             }
 
-            message.textContent = "WRONG CARD. FROM THE TOP.";
+            message.textContent = "WRONG CARD.";
 
-            await sleep(900);
+            await sleep(700);
+
+            if (await askRetry("WRONG CARD.") === "board") { openLevels(); return; }
+
+            if (id !== runId) return;
         }
 
     })();
@@ -1288,7 +1319,7 @@ function startCards() {
 // =====================================================
 
 const LOCK_POS = [17, 50, 83];       // dot centres, in percent
-const LOCK_LENGTH = 5;
+const LOCK_LENGTH = 6;
 const LOCK_SECONDS = 9;
 
 function lockMidpoint(a, b) {
@@ -1663,6 +1694,10 @@ function startLock() {
                 completeLevel(3);
                 return;
             }
+
+            if (await askRetry("PATTERN FAILED.") === "board") { openLevels(); return; }
+
+            if (id !== runId) return;
         }
 
     })();
@@ -1673,7 +1708,7 @@ function startLock() {
 // The squares glow faster and faster. Missed ones are counted.
 // =====================================================
 
-const REFLEX_ROUNDS = 20;
+const REFLEX_ROUNDS = 30;
 
 function startReflex() {
 
@@ -2028,24 +2063,887 @@ function startDoors() {
     (async function loop() {
 
         let attemptNo = 0;
+        let solved = 0;
 
         while (id === runId) {
 
             attemptNo++;
 
-            stat.textContent = "ATTEMPT " + attemptNo;
+            stat.textContent = "DOOR " + (solved + 1) + " / 3";
 
             const ok = await attempt();
 
             if (id !== runId || ok === null) return;
 
             if (ok) {
-                completeLevel(5);
-                return;
+                solved++;
+                if (solved >= 3) { completeLevel(5); return; }
+                continue;
             }
+
+            solved = 0;
+
+            if (await askRetry("WRONG DOOR.") === "board") { openLevels(); return; }
+
+            if (id !== runId) return;
         }
 
     })();
+}
+
+// =====================================================
+// CHALLENGES 6-10
+// =====================================================
+
+const memoryQuestions = [
+    ["🔑", "🕯️", "📕", "⏰", "🌹", "🎲"],
+    ["🧸", "🔔", "📷", "🍎", "🌙", "🎸"],
+    ["🌹", "🎲", "🧸", "🔔", "📷", "🍎"],
+    ["🎸", "🔑", "🕯️", "📕", "⏰", "🌹"],
+    ["📷", "🍎", "🌙", "🎸", "🔑", "🕯️"],
+    ["📕", "⏰", "🌹", "🎲", "🧸", "🔔"],
+    ["🌙", "🎸", "🔑", "🕯️", "📕", "⏰"],
+    ["🎲", "🧸", "🔔", "📷", "🍎", "🌙"],
+    ["🕯️", "📕", "⏰", "🌹", "🎲", "🧸"],
+    ["🔔", "📷", "🍎", "🌙", "🎸", "🔑"],
+    ["⏰", "🌹", "🎲", "🧸", "🔔", "📷"],
+    ["🍎", "🌙", "🎸", "🔑", "🕯️", "📕"],
+    ["🔑", "📷", "🎲", "🕯️", "🍎", "⏰"],
+    ["🧸", "🌙", "🔔", "🎸", "📕", "🌹"],
+    ["📕", "🔑", "🌹", "🍎", "🎲", "🌙"],
+    ["🎸", "🧸", "⏰", "🔔", "🕯️", "📷"],
+    ["🌹", "📷", "🔑", "🌙", "🧸", "📕"],
+    ["🍎", "🎲", "🕯️", "🎸", "🔔", "⏰"],
+    ["📷", "🌹", "🧸", "🔑", "📕", "🎸"],
+    ["🌙", "⏰", "🍎", "🔔", "🎲", "🕯️"]
+];
+
+const wordQuestions = [
+    {
+        word: "HOLE",
+        clue: "The more of me you take away, the bigger I become.",
+        difficulty: "easy"
+    },
+    {
+        word: "TOMORROW",
+        clue: "I am always a day away, yet I never arrive.",
+        accept: ["FUTURE"],
+        difficulty: "medium"
+    },
+    {
+        word: "MAP",
+        clue: "I have rivers without water, cities without people and roads without travellers.",
+        accept: ["ATLAS"],
+        difficulty: "medium"
+    },
+    {
+        word: "BREATH",
+        clue: "I am lighter than a feather, yet the strongest person cannot hold me for long.",
+        accept: ["BREATHE"],
+        difficulty: "medium"
+    },
+    {
+        word: "KEYBOARD",
+        clue: "I have many keys, yet I open no door. I have a space, yet no room.",
+        difficulty: "easy"
+    },
+    {
+        word: "NEEDLE",
+        clue: "I have one eye, yet I cannot see. I pull a thread behind me.",
+        difficulty: "easy"
+    },
+    {
+        word: "SPONGE",
+        clue: "I am full of holes, yet I still hold water.",
+        difficulty: "easy"
+    },
+    {
+        word: "TOWEL",
+        clue: "The more I dry, the wetter I get.",
+        difficulty: "easy"
+    },
+    {
+        word: "COFFIN",
+        clue: "The one who makes me does not need me. The one who buys me does not use me. The one who uses me never knows.",
+        accept: ["CASKET"],
+        difficulty: "hard"
+    },
+    {
+        word: "FIRE",
+        clue: "I am not alive, yet I grow. I have no lungs, yet I need air. Water kills me.",
+        accept: ["FLAME"],
+        difficulty: "medium"
+    },
+    {
+        word: "ICE",
+        clue: "I am made of water, but if you put me in water, I disappear.",
+        difficulty: "medium"
+    },
+    {
+        word: "STAMP",
+        clue: "I travel all around the world while staying in one corner.",
+        difficulty: "medium"
+    },
+    {
+        word: "REFLECTION",
+        clue: "You can see me in water, yet I never get wet.",
+        accept: ["REFLECTIONS"],
+        difficulty: "medium"
+    },
+    {
+        word: "MOON",
+        clue: "I wear a different face most nights, yet I never leave the sky.",
+        difficulty: "easy"
+    },
+    {
+        word: "LIGHTNING",
+        clue: "You see me before you hear me, and I am gone before you can point.",
+        difficulty: "medium"
+    },
+    {
+        word: "PENCIL",
+        clue: "I am dug out of the ground, locked inside wood, and used by almost everybody.",
+        accept: ["PENCILS"],
+        difficulty: "easy"
+    },
+    {
+        word: "BOTTLE",
+        clue: "I have a neck but no head, and a cap but no hair.",
+        difficulty: "easy"
+    },
+    {
+        word: "RIVER",
+        clue: "I run but never walk. I have a mouth but never speak. I have a bed but never sleep.",
+        difficulty: "medium"
+    },
+    {
+        word: "NAME",
+        clue: "I belong to you, yet other people use me far more than you do.",
+        accept: ["NAMES"],
+        difficulty: "medium"
+    },
+    {
+        word: "SILENCE",
+        clue: "Say my name and I am gone.",
+        difficulty: "hard"
+    },
+    {
+        word: "DARKNESS",
+        clue: "The more of me there is, the less you can see.",
+        accept: ["DARK"],
+        difficulty: "medium"
+    },
+    {
+        word: "TIME",
+        clue: "I heal wounds and steal youth, yet nobody has ever held me.",
+        difficulty: "medium"
+    },
+    {
+        word: "MEMORY",
+        clue: "I am the only proof of your past, yet I can be rewritten without you knowing.",
+        accept: ["MEMORIES"],
+        difficulty: "hard"
+    },
+    {
+        word: "ANCHOR",
+        clue: "I hold the heaviest ships still, yet I live at the bottom of the sea.",
+        difficulty: "medium"
+    },
+    {
+        word: "EGG",
+        clue: "I have no doors, windows or hinges, yet something golden hides inside me.",
+        accept: ["EGGS"],
+        difficulty: "easy"
+    },
+    {
+        word: "SMOKE",
+        clue: "I rise from the fire without wings, and vanish without leaving a body.",
+        difficulty: "medium"
+    },
+    {
+        word: "WIND",
+        clue: "You can hear me and feel me but never see me, and I bend the tallest trees.",
+        difficulty: "medium"
+    },
+    {
+        word: "INSOMNIA",
+        clue: "I steal your sleep without ever entering your room.",
+        difficulty: "hard"
+    },
+    {
+        word: "NIGHTMARE",
+        clue: "I visit you while you sleep, and the more you fear me, the more real I seem.",
+        accept: ["NIGHTMARES", "DREAM"],
+        difficulty: "hard"
+    },
+    {
+        word: "SHADOW",
+        clue: "I grow tallest just before the light disappears, and then I vanish completely.",
+        accept: ["SHADOWS"],
+        difficulty: "hard"
+    },
+    {
+        word: "SECRET",
+        clue: "I am only worth something while you keep me, and I break the moment you share me.",
+        accept: ["SECRETS"],
+        difficulty: "hard"
+    }
+];
+
+const observationQuestions = [
+    {
+        scene: "🔔 🔑 🕯️ 📕 🧸 🚪 🌙",
+        question: "Which object was NOT present?",
+        options: ["🔔", "🌙", "🛎️", "🕯️"],
+        answer: "🛎️",
+        difficulty: "hard"
+    },
+    {
+        scene: "🗝️ ⏰ 🌹 📷 🪞 🎲 🪑",
+        question: "Which object was NOT present?",
+        options: ["🪑", "🌹", "🗝️", "🔑"],
+        answer: "🔑",
+        difficulty: "hard"
+    },
+    {
+        scene: "🕰️ 🕯️ 📗 🧸 🚪 🍏 🎸",
+        question: "Which object was NOT present?",
+        options: ["⏰", "📗", "🕰️", "🍏"],
+        answer: "⏰",
+        difficulty: "hard"
+    },
+    {
+        scene: "🥀 🔔 📖 🔦 🧸 🎲 🪞",
+        question: "Which object was NOT present?",
+        options: ["🎲", "🌹", "🥀", "📖"],
+        answer: "🌹",
+        difficulty: "medium"
+    },
+    {
+        scene: "🌕 🔒 📷 🕯️ 🪆 🎸 ⏳",
+        question: "Which object was NOT present?",
+        options: ["🌕", "🔒", "⏳", "🌙"],
+        answer: "🌙",
+        difficulty: "medium"
+    },
+    {
+        scene: "📕 📘 📙 🔑 🧸 🌹 🚪",
+        question: "Which object was NOT present?",
+        options: ["📕", "📘", "🌹", "📗"],
+        answer: "📗",
+        difficulty: "hard"
+    },
+    {
+        scene: "📸 🔔 🕯️ 🎸 🪞 🔓 🪑",
+        question: "Which object was NOT present?",
+        options: ["📸", "📷", "🔓", "🪑"],
+        answer: "📷",
+        difficulty: "hard"
+    },
+    {
+        scene: "🪆 🔑 ⏱️ 🌙 🎲 📗 🍎",
+        question: "Which object was NOT present?",
+        options: ["⏱️", "🍎", "🧸", "🪆"],
+        answer: "🧸",
+        difficulty: "easy"
+    },
+    {
+        scene: "🔦 🔔 📞 🧸 🌹 📕 🚪",
+        question: "Which object was NOT present?",
+        options: ["🌹", "📞", "☎️", "🚪"],
+        answer: "☎️",
+        difficulty: "hard"
+    },
+    {
+        scene: "🍏 🕯️ 🔑 📷 🌙 🛎️ 🎸",
+        question: "Which object was NOT present?",
+        options: ["🍎", "🔑", "🛎️", "🍏"],
+        answer: "🍎",
+        difficulty: "medium"
+    },
+    {
+        scene: "🔒 ⏰ 🌷 🪞 🧸 🎲 📻",
+        question: "Which object was NOT present?",
+        options: ["🔒", "🌷", "📻", "🔓"],
+        answer: "🔓",
+        difficulty: "medium"
+    },
+    {
+        scene: "🖼️ 🔑 🕯️ 🪑 🔔 🌹 ⏳",
+        question: "Which object was NOT present?",
+        options: ["🪞", "⏳", "🕯️", "🖼️"],
+        answer: "🪞",
+        difficulty: "medium"
+    },
+    {
+        scene: "🎻 🧸 📕 🔔 🌙 🔑 🕰️",
+        question: "Which object was NOT present?",
+        options: ["🧸", "🎸", "🕰️", "🎻"],
+        answer: "🎸",
+        difficulty: "medium"
+    },
+    {
+        scene: "🌑 🔑 🪆 📷 🕯️ 📺 🍎",
+        question: "Which object was NOT present?",
+        options: ["🌑", "🌕", "📺", "🍎"],
+        answer: "🌕",
+        difficulty: "hard"
+    },
+    {
+        scene: "🪟 🔔 🕯️ 🧸 📕 🌹 🎲",
+        question: "Which object was NOT present?",
+        options: ["🎲", "🪟", "🚪", "🔔"],
+        answer: "🚪",
+        difficulty: "medium"
+    },
+    {
+        scene: "📖 📗 📘 📙 🕯️ 🔑 🌙",
+        question: "Which object was NOT present?",
+        options: ["🌙", "📘", "📖", "📕"],
+        answer: "📕",
+        difficulty: "hard"
+    },
+    {
+        scene: "🔕 ⏰ 🌹 🧸 🪑 📷 🎲",
+        question: "Which object was NOT present?",
+        options: ["🎲", "🪑", "🔕", "🔔"],
+        answer: "🔔",
+        difficulty: "medium"
+    },
+    {
+        scene: "🧵 🧩 🃏 🎲 🕯️ 🔑 📻",
+        question: "Which object was NOT present?",
+        options: ["✂️", "📻", "🃏", "🧵"],
+        answer: "✂️",
+        difficulty: "easy"
+    },
+    {
+        scene: "📹 🔔 🌹 🪞 ⏰ 🧸 🚪",
+        question: "Which object was NOT present?",
+        options: ["🎥", "🚪", "📹", "🌹"],
+        answer: "🎥",
+        difficulty: "hard"
+    },
+    {
+        scene: "🛋️ 🪑 🕯️ 📕 🔑 🌙 🧸",
+        question: "Which object was NOT present?",
+        options: ["🛏️", "🛋️", "🪑", "🧸"],
+        answer: "🛏️",
+        difficulty: "medium"
+    }
+];
+
+const logicQuestions = [
+    {
+        question: "1   2   6   24   120   ?",
+        options: ["600", "620", "720", "840"],
+        answer: "720",
+        difficulty: "medium"
+    },
+    {
+        question: "2   6   12   20   30   ?",
+        options: ["40", "42", "44", "48"],
+        answer: "42",
+        difficulty: "easy"
+    },
+    {
+        question: "1   3   7   15   31   ?",
+        options: ["47", "55", "62", "63"],
+        answer: "63",
+        difficulty: "medium"
+    },
+    {
+        question: "3   5   9   17   33   ?",
+        options: ["63", "65", "66", "69"],
+        answer: "65",
+        difficulty: "medium"
+    },
+    {
+        question: "1   2   4   7   11   16   ?",
+        options: ["21", "22", "23", "24"],
+        answer: "22",
+        difficulty: "medium"
+    },
+    {
+        question: "0   1   1   2   4   7   13   ?",
+        options: ["20", "21", "24", "26"],
+        answer: "24",
+        difficulty: "hard"
+    },
+    {
+        question: "10   9   7   4   0   ?",
+        options: ["-4", "-5", "-6", "-10"],
+        answer: "-5",
+        difficulty: "easy"
+    },
+    {
+        question: "2   10   4   20   8   40   ?",
+        options: ["16", "32", "48", "80"],
+        answer: "16",
+        difficulty: "hard"
+    },
+    {
+        question: "3   6   5   10   9   18   ?",
+        options: ["16", "17", "19", "36"],
+        answer: "17",
+        difficulty: "medium"
+    },
+    {
+        question: "1   4   10   22   46   ?",
+        options: ["82", "90", "92", "94"],
+        answer: "94",
+        difficulty: "hard"
+    },
+    {
+        question: "7   9   13   21   37   ?",
+        options: ["61", "65", "69", "74"],
+        answer: "69",
+        difficulty: "medium"
+    },
+    {
+        question: "2   4   12   48   240   ?",
+        options: ["960", "1200", "1440", "2400"],
+        answer: "1440",
+        difficulty: "medium"
+    },
+    {
+        question: "2   12   36   80   150   ?",
+        options: ["216", "240", "252", "256"],
+        answer: "252",
+        difficulty: "hard"
+    },
+    {
+        question: "1   11   21   1211   111221   ?",
+        options: ["3112", "211211", "312211", "1112221"],
+        answer: "312211",
+        difficulty: "hard"
+    },
+    {
+        question: "5   10   20   40   80   ?",
+        options: ["120", "140", "160", "200"],
+        answer: "160",
+        difficulty: "easy"
+    },
+    {
+        question: "1   4   9   16   25   ?",
+        options: ["30", "32", "36", "49"],
+        answer: "36",
+        difficulty: "easy"
+    },
+    {
+        question: "2   3   5   8   13   ?",
+        options: ["18", "20", "21", "24"],
+        answer: "21",
+        difficulty: "medium"
+    },
+    {
+        question: "100   90   81   73   66   ?",
+        options: ["58", "60", "62", "65"],
+        answer: "60",
+        difficulty: "medium"
+    },
+    {
+        question: "3   9   27   81   243   ?",
+        options: ["486", "600", "729", "810"],
+        answer: "729",
+        difficulty: "easy"
+    },
+    {
+        question: "6   11   21   36   56   ?",
+        options: ["76", "80", "81", "86"],
+        answer: "81",
+        difficulty: "hard"
+    }
+];
+
+const patternQuestions = [
+    {
+        pattern: ["▲", "■", "◆", "★", "■", "▲"],
+        options: ["▲", "■", "◆", "★", "●"]
+    },
+    {
+        pattern: ["●", "▼", "♥", "●", "▼", "■"],
+        options: ["●", "▼", "♥", "■", "★"]
+    },
+    {
+        pattern: ["★", "◆", "▲", "★", "◆", "▼"],
+        options: ["★", "◆", "▲", "▼", "●"]
+    },
+    {
+        pattern: ["■", "♥", "●", "■", "♥", "▲"],
+        options: ["■", "♥", "●", "▲", "◆"]
+    },
+    {
+        pattern: ["▼", "★", "◆", "▼", "★", "■"],
+        options: ["▼", "★", "◆", "■", "♥"]
+    },
+    {
+        pattern: ["●", "▲", "♥", "●", "▲", "★"],
+        options: ["●", "▲", "♥", "★", "■"]
+    },
+    {
+        pattern: ["◆", "■", "▼", "◆", "■", "♥"],
+        options: ["◆", "■", "▼", "♥", "▲"]
+    },
+    {
+        pattern: ["▲", "★", "●", "▲", "★", "◆"],
+        options: ["▲", "★", "●", "◆", "▼"]
+    },
+    {
+        pattern: ["♥", "▼", "■", "♥", "▼", "★"],
+        options: ["♥", "▼", "■", "★", "●"]
+    },
+    {
+        pattern: ["●", "◆", "▲", "●", "◆", "♥"],
+        options: ["●", "◆", "▲", "♥", "■"]
+    },
+    {
+        pattern: ["■", "▲", "★", "■", "▲", "♥"],
+        options: ["■", "▲", "★", "♥", "●"]
+    },
+    {
+        pattern: ["◆", "●", "▼", "◆", "●", "★"],
+        options: ["◆", "●", "▼", "★", "▲"]
+    },
+    {
+        pattern: ["▼", "♥", "▲", "▼", "♥", "◆"],
+        options: ["▼", "♥", "▲", "◆", "■"]
+    },
+    {
+        pattern: ["★", "■", "●", "★", "■", "▼"],
+        options: ["★", "■", "●", "▼", "♥"]
+    },
+    {
+        pattern: ["♥", "◆", "▲", "♥", "◆", "●"],
+        options: ["♥", "◆", "▲", "●", "★"]
+    },
+    {
+        pattern: ["▲", "▼", "■", "▲", "▼", "★"],
+        options: ["▲", "▼", "■", "★", "♥"]
+    },
+    {
+        pattern: ["●", "★", "♥", "●", "★", "▲"],
+        options: ["●", "★", "♥", "▲", "◆"]
+    },
+    {
+        pattern: ["◆", "▼", "●", "◆", "▼", "■"],
+        options: ["◆", "▼", "●", "■", "♥"]
+    },
+    {
+        pattern: ["■", "♥", "▼", "■", "♥", "●"],
+        options: ["■", "♥", "▼", "●", "▲"]
+    },
+    {
+        pattern: ["▲", "◆", "★", "▲", "◆", "♥"],
+        options: ["▲", "◆", "★", "♥", "●"]
+    }
+];
+
+function askRetry(text) {
+
+    return new Promise(function (resolve) {
+
+        pauseClock();
+
+        const box = document.createElement("div");
+
+        box.className = "retry-box";
+        box.innerHTML =
+            '<p>' + escapeHtml(text) + '</p>' +
+            '<div><button type="button" data-a="r">RESTART</button>' +
+            '<button type="button" data-a="b" class="ghost">BOARD</button></div>';
+
+        box.addEventListener("click", function (event) {
+
+            const b = event.target.closest("button");
+
+            if (!b) return;
+
+            box.remove();
+
+            resolve(b.dataset.a === "b" ? "board" : "restart");
+        });
+
+        $("game").appendChild(box);
+    });
+}
+
+function timed(ms, promise) {
+
+    const bar = $("quiz-bar").firstElementChild;
+
+    bar.style.transition = "none";
+    bar.style.width = "100%";
+    void bar.offsetWidth;
+    bar.style.transition = "width " + ms + "ms linear";
+    bar.style.width = "0%";
+
+    return Promise.race([promise, sleep(ms).then(function () { return null; })]);
+}
+
+function quizMsg(text) { $("quiz-message").textContent = text; }
+
+function diffPick(pool, level, used) {
+
+    const fresh = pool.filter(function (q) { return used.indexOf(q) === -1; });
+    const same = fresh.filter(function (q) { return q.difficulty === level; });
+    const q = pick(same.length ? same : (fresh.length ? fresh : pool));
+
+    used.push(q);
+
+    return q;
+}
+
+function optionButtons(items, onPick, keepOpen) {
+
+    const row = document.createElement("div");
+
+    row.className = "quiz-opts";
+
+    items.forEach(function (item) {
+
+        const b = document.createElement("button");
+
+        b.type = "button";
+        b.className = "quiz-opt";
+        b.textContent = item;
+        b.onclick = function () {
+            if (b.disabled) return;
+            if (!keepOpen) b.disabled = true;
+            onPick(item, b);
+        };
+
+        row.appendChild(b);
+    });
+
+    $("quiz-stage").appendChild(row);
+
+    return row;
+}
+
+// Rounds in a row. A wrong answer (or a timeout) ends the run and
+// the player picks RESTART or BOARD.
+async function runRounds(id, n, title, rounds, play) {
+
+    $("quiz-label").textContent = "CHALLENGE " + pad(n);
+    $("quiz-title").textContent = title;
+
+    startLive("quiz-time");
+
+    activeCleanup = function () { $("quiz-stage").innerHTML = ""; };
+
+    let i = 0;
+
+    while (i < rounds) {
+
+        $("quiz-stat").textContent = "ROUND " + (i + 1) + " / " + rounds;
+        $("quiz-stage").innerHTML = "";
+
+        startClock();
+
+        const fail = await play(i);
+
+        pauseClock();
+
+        if (id !== runId) return;
+
+        if (fail === "") {
+            quizMsg("Correct.");
+            await sleep(700);
+            if (id !== runId) return;
+            i++;
+            continue;
+        }
+
+        quizMsg(fail);
+
+        await sleep(900);
+
+        if (id !== runId) return;
+
+        if (await askRetry(fail) === "board") { openLevels(); return; }
+
+        if (id !== runId) return;
+
+        i = 0;
+    }
+
+    completeLevel(n);
+}
+
+// Memorise a row of symbols, then rebuild it in order
+async function rebuild(id, seq, pool, secs) {
+
+    const show = document.createElement("div");
+
+    show.className = "quiz-big";
+    show.textContent = seq.join(" ");
+
+    $("quiz-stage").appendChild(show);
+
+    for (let t = secs; t > 0; t--) {
+        quizMsg("Memorise it. " + t);
+        await sleep(1000);
+        if (id !== runId) return "";
+    }
+
+    show.textContent = seq.map(function () { return "?"; }).join(" ");
+
+    quizMsg("Rebuild it in order.");
+
+    const got = [];
+
+    await timed(seq.length * 4000, new Promise(function (resolve) {
+
+        optionButtons(pool, function (item) {
+            got.push(item);
+            show.textContent = got.join(" ");
+            if (got.length === seq.length) resolve(true);
+        }, true);
+    }));
+
+    if (id !== runId) return "";
+
+    if (got.length < seq.length) return "TOO SLOW.";
+
+    return got.join() === seq.join() ? "" : "WRONG ORDER.";
+}
+
+function startMemory() {
+
+    const id = runId;
+
+    const all = Array.from(new Set([].concat.apply([], memoryQuestions)));
+
+    runRounds(id, 6, "MEMORY TEST", 4, function (i) {
+        return rebuild(id, pick(memoryQuestions), shuffled(all), 8 - i);
+    });
+}
+
+function startRecall() {
+
+    const id = runId;
+
+    runRounds(id, 10, "PATTERN RECALL", 4, function (i) {
+
+        const q = pick(patternQuestions);
+
+        return rebuild(id, q.pattern, shuffled(q.options), 8 - i);
+    });
+}
+
+function startWord() {
+
+    const id = runId;
+    const used = [];
+
+    runRounds(id, 7, "RIDDLES", 6, async function (i) {
+
+        const q = diffPick(wordQuestions, i < 2 ? "easy" : i < 4 ? "medium" : "hard", used);
+
+        quizMsg("Answer the riddle. 30 seconds.");
+
+        const clue = document.createElement("div");
+
+        clue.className = "quiz-big small";
+        clue.textContent = q.clue;
+
+        const input = document.createElement("input");
+
+        input.type = "text";
+        input.className = "quiz-input";
+        input.placeholder = "Your answer";
+        input.autocomplete = "off";
+
+        const go = document.createElement("button");
+
+        go.type = "button";
+        go.textContent = "ANSWER";
+
+        $("quiz-stage").appendChild(clue);
+        $("quiz-stage").appendChild(input);
+        $("quiz-stage").appendChild(go);
+
+        input.focus();
+
+        const answer = await timed(30000, new Promise(function (resolve) {
+            go.onclick = function () { resolve(input.value); };
+            input.onkeydown = function (e) { if (e.key === "Enter") resolve(input.value); };
+        }));
+
+        if (id !== runId) return "";
+
+        if (answer === null) return "TIME'S UP.";
+
+        const ok = [q.word].concat(q.accept || []).some(function (w) {
+            return w.toUpperCase() === answer.trim().toUpperCase();
+        });
+
+        return ok ? "" : "WRONG. IT WAS " + q.word + ".";
+    });
+}
+
+async function choice(id, q, secs) {
+
+    quizMsg(q.question);
+
+    const picked = await timed(secs * 1000, new Promise(function (resolve) {
+        optionButtons(shuffled(q.options), function (item) { resolve(item); });
+    }));
+
+    if (id !== runId) return "";
+
+    if (picked === null) return "TIME'S UP.";
+
+    return picked === q.answer ? "" : "WRONG ANSWER.";
+}
+
+function startObserve() {
+
+    const id = runId;
+    const used = [];
+
+    runRounds(id, 8, "OBSERVATION", 5, async function (i) {
+
+        const q = diffPick(observationQuestions, i < 2 ? "easy" : i < 4 ? "medium" : "hard", used);
+
+        const scene = document.createElement("div");
+
+        scene.className = "quiz-big";
+        scene.textContent = q.scene;
+
+        $("quiz-stage").appendChild(scene);
+
+        for (let t = 8 - i; t > 0; t--) {
+            quizMsg("Study the scene. " + t);
+            await sleep(1000);
+            if (id !== runId) return "";
+        }
+
+        scene.textContent = "\u2753";
+
+        return choice(id, q, 12);
+    });
+}
+
+function startLogic() {
+
+    const id = runId;
+    const used = [];
+
+    runRounds(id, 9, "LOGIC", 6, async function (i) {
+
+        const q = diffPick(logicQuestions, i < 2 ? "easy" : i < 4 ? "medium" : "hard", used);
+
+        const box = document.createElement("div");
+
+        box.className = "quiz-big";
+        box.textContent = q.question;
+
+        $("quiz-stage").appendChild(box);
+
+        return choice(id, q, 20 - i * 2);
+    });
 }
 
 // =====================================================
