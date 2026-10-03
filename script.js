@@ -1012,7 +1012,8 @@ async function runCountdown(id, container) {
 // Miss one and the challenge starts again (the clock keeps running).
 // =====================================================
 
-const ROBOTS_TOTAL = 18;
+const ROBOTS_TOTAL = 10;
+const ROBOT_WAVES = 3;
 
 function spawnRobot(arena, visibleMs) {
 
@@ -1062,11 +1063,13 @@ function spawnRobot(arena, visibleMs) {
     });
 }
 
-async function robotsAttempt(id, arena, stat) {
+async function robotsAttempt(id, arena, stat, wave) {
 
     arena.innerHTML = "";
 
-    stat.textContent = "SHOT 0 / " + ROBOTS_TOTAL;
+    const tag = "WAVE " + (wave + 1) + " / " + ROBOT_WAVES + " \u00b7 ";
+
+    stat.textContent = tag + "SHOT 0 / " + ROBOTS_TOTAL;
 
     await runCountdown(id, arena);
 
@@ -1076,7 +1079,7 @@ async function robotsAttempt(id, arena, stat) {
 
     for (let i = 0; i < ROBOTS_TOTAL; i++) {
 
-        const visible = Math.max(800, 1450 - i * 55);
+        const visible = Math.max(650, 1450 - i * 55 - wave * 170);
 
         const hit = await spawnRobot(arena, visible);
 
@@ -1084,9 +1087,9 @@ async function robotsAttempt(id, arena, stat) {
 
         if (!hit) return false;
 
-        stat.textContent = "SHOT " + (i + 1) + " / " + ROBOTS_TOTAL;
+        stat.textContent = tag + "SHOT " + (i + 1) + " / " + ROBOTS_TOTAL;
 
-        await sleep(Math.max(180, 420 - i * 20));
+        await sleep(Math.max(150, 420 - i * 20 - wave * 40));
 
         if (id !== runId) return false;
     }
@@ -1110,18 +1113,37 @@ function startRobots() {
 
     (async function loop() {
 
+        let wave = 0;
+
         while (id === runId) {
 
-            const ok = await robotsAttempt(id, arena, stat);
+            const ok = await robotsAttempt(id, arena, stat, wave);
 
             if (id !== runId) return;
 
             pauseClock();
 
             if (ok) {
-                completeLevel(1);
-                return;
+
+                wave++;
+
+                if (wave >= ROBOT_WAVES) {
+                    completeLevel(1);
+                    return;
+                }
+
+                message.textContent = "WAVE CLEARED.";
+
+                await nextRound($("robots-screen").querySelector(".challenge-container"));
+
+                if (id !== runId) return;
+
+                message.textContent = "Shoot every robot before it disappears.";
+
+                continue;
             }
+
+            wave = 0;
 
             message.textContent = "A ROBOT GOT AWAY.";
 
@@ -1286,21 +1308,37 @@ function startCards() {
     (async function loop() {
 
         let attempt = 0;
+        let solved = 0;
 
         while (id === runId) {
 
             attempt++;
 
-            stat.textContent = "ATTEMPT " + attempt;
+            stat.textContent = "ROUND " + (solved + 1) + " / 4";
 
             const ok = await cardsAttempt(id);
 
             if (id !== runId || ok === null) return;
 
             if (ok) {
-                completeLevel(2);
-                return;
+
+                solved++;
+
+                if (solved >= 4) {
+                    completeLevel(2);
+                    return;
+                }
+
+                message.textContent = "FOUND IT.";
+
+                await nextRound($("cards-screen").querySelector(".challenge-container"));
+
+                if (id !== runId) return;
+
+                continue;
             }
+
+            solved = 0;
 
             message.textContent = "WRONG CARD.";
 
@@ -1319,7 +1357,7 @@ function startCards() {
 // =====================================================
 
 const LOCK_POS = [17, 50, 83];       // dot centres, in percent
-const LOCK_LENGTH = 6;
+const LOCK_LENGTHS = [4, 5, 6];
 const LOCK_SECONDS = 9;
 
 function lockMidpoint(a, b) {
@@ -1398,6 +1436,7 @@ function startLock() {
     const live = pad.querySelector(".lock-live");
 
     let expected = [];
+    let lockRound = 0;
     let path = [];
     let accepting = false;
     let dragging = false;
@@ -1584,7 +1623,7 @@ function startLock() {
 
     async function attempt() {
 
-        expected = generatePattern(LOCK_LENGTH);
+        expected = generatePattern(LOCK_LENGTHS[lockRound]);
 
         clearDraw();
 
@@ -1687,16 +1726,31 @@ function startLock() {
 
             attemptNo++;
 
-            stat.textContent = "ATTEMPT " + attemptNo;
+            stat.textContent = "ROUND " + (lockRound + 1) + " / " + LOCK_LENGTHS.length;
 
             const ok = await attempt();
 
             if (id !== runId || ok === null) return;
 
             if (ok) {
-                completeLevel(3);
-                return;
+
+                lockRound++;
+
+                if (lockRound >= LOCK_LENGTHS.length) {
+                    completeLevel(3);
+                    return;
+                }
+
+                message.textContent = "UNLOCKED. IT GETS LONGER.";
+
+                await nextRound($("lock-screen").querySelector(".challenge-container"));
+
+                if (id !== runId) return;
+
+                continue;
             }
+
+            lockRound = 0;
 
             if (await askRetry("PATTERN FAILED.") === "board") { openLevels(); return; }
 
@@ -1711,7 +1765,7 @@ function startLock() {
 // The squares glow faster and faster. Missed ones are counted.
 // =====================================================
 
-const REFLEX_ROUNDS = 30;
+const REFLEX_ROUNDS = 40;
 
 function startReflex() {
 
@@ -1780,6 +1834,15 @@ function startReflex() {
         let last = -1;
 
         for (let round = 0; round < REFLEX_ROUNDS; round++) {
+
+            if (round > 0 && round % 10 === 0) {
+
+                await nextRound($("grid-screen").querySelector(".challenge-container"));
+
+                if (id !== runId) return;
+
+                startClock();
+            }
 
             const progress = round / (REFLEX_ROUNDS - 1);
 
