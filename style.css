@@ -2322,3 +2322,6 @@ path.fp-red:first-of-type { stroke-dasharray: 5 4; }
     .leaderboard-entry span:nth-child(1) { font-size: 1.5rem; }
     .leaderboard-time::before, .leaderboard-missed::before, .leaderboard-accuracy::before { display: block; margin: 0; }
 }
+
+/* countdown bar only shows while the player is playing */
+.timebar.is-hidden { visibility: hidden; }

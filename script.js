@@ -1577,6 +1577,7 @@ function startLock() {
     };
 
     function resetBar() {
+        $("lock-bar").classList.add("is-hidden");
         bar.style.transition = "none";
         bar.style.width = "100%";
     }
@@ -1616,7 +1617,9 @@ function startLock() {
 
         message.textContent = "Now draw it. Go!";
 
-        // time bar
+        // time bar: only while the player draws
+        $("lock-bar").classList.remove("is-hidden");
+
         void bar.offsetWidth;
 
         bar.style.transition = "width " + LOCK_SECONDS + "s linear";
@@ -2689,17 +2692,34 @@ function nextRound(host) {
     });
 }
 
-function timed(ms, promise) {
+function resetQuizBar() {
 
     const bar = $("quiz-bar").firstElementChild;
 
     bar.style.transition = "none";
     bar.style.width = "100%";
+
+    $("quiz-bar").classList.add("is-hidden");
+}
+
+function timed(ms, promise) {
+
+    const bar = $("quiz-bar").firstElementChild;
+
+    const holder = $("quiz-bar");
+
+    bar.style.transition = "none";
+    bar.style.width = "100%";
+    holder.classList.remove("is-hidden");
     void bar.offsetWidth;
     bar.style.transition = "width " + ms + "ms linear";
     bar.style.width = "0%";
 
-    return Promise.race([promise, sleep(ms).then(function () { return null; })]);
+    return Promise.race([promise, sleep(ms).then(function () { return null; })])
+        .then(function (value) {
+            holder.classList.add("is-hidden");
+            return value;
+        });
 }
 
 function quizMsg(text) { $("quiz-message").textContent = text; }
@@ -2759,6 +2779,7 @@ async function runRounds(id, n, title, rounds, play) {
 
         $("quiz-stat").textContent = "ROUND " + (i + 1) + " / " + rounds;
         $("quiz-stage").innerHTML = "";
+        resetQuizBar();
 
         const fail = await play(i);
 
