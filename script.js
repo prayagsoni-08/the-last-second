@@ -889,7 +889,7 @@ function stopLevel() {
         activeCleanup = null;
     }
 
-    document.querySelectorAll(".retry-box").forEach(function (b) { b.remove(); });
+    document.querySelectorAll(".retry-box, .next-btn").forEach(function (b) { b.remove(); });
 
     pauseClock();
 
@@ -1195,8 +1195,6 @@ async function cardsAttempt(id) {
 
     message.textContent = "Remember this card.";
 
-    startClock();
-
     await sleep(600);
 
     if (id !== runId) return null;
@@ -1241,6 +1239,8 @@ async function cardsAttempt(id) {
     message.textContent = "Which one was it?";
 
     row.classList.remove("locked");
+
+    startClock();
 
     const chosen = await new Promise(function (resolve) {
 
@@ -1591,8 +1591,6 @@ function startLock() {
 
         message.textContent = "Watch the pattern.";
 
-        startClock();
-
         await sleep(700);
 
         if (id !== runId) return null;
@@ -1625,6 +1623,8 @@ function startLock() {
         bar.style.width = "0%";
 
         accepting = true;
+
+        startClock();
 
         const result = await new Promise(function (resolve) {
 
@@ -2078,6 +2078,8 @@ function startDoors() {
             if (ok) {
                 solved++;
                 if (solved >= 3) { completeLevel(5); return; }
+                await nextRound(document.querySelector("#doors-screen .challenge-container"));
+                if (id !== runId) return;
                 continue;
             }
 
@@ -2668,6 +2670,25 @@ function askRetry(text) {
     });
 }
 
+function nextRound(host) {
+
+    return new Promise(function (resolve) {
+
+        pauseClock();
+
+        const b = document.createElement("button");
+
+        b.type = "button";
+        b.className = "next-btn";
+        b.textContent = "START NEXT ROUND";
+        b.onclick = function () { b.remove(); resolve(); };
+
+        host.appendChild(b);
+
+        b.focus();
+    });
+}
+
 function timed(ms, promise) {
 
     const bar = $("quiz-bar").firstElementChild;
@@ -2739,8 +2760,6 @@ async function runRounds(id, n, title, rounds, play) {
         $("quiz-stat").textContent = "ROUND " + (i + 1) + " / " + rounds;
         $("quiz-stage").innerHTML = "";
 
-        startClock();
-
         const fail = await play(i);
 
         pauseClock();
@@ -2748,10 +2767,13 @@ async function runRounds(id, n, title, rounds, play) {
         if (id !== runId) return;
 
         if (fail === "") {
-            quizMsg("Correct.");
-            await sleep(700);
-            if (id !== runId) return;
             i++;
+            if (i < rounds) {
+                quizMsg("Round complete.");
+                $("quiz-stage").innerHTML = "";
+                await nextRound($("quiz-stage"));
+                if (id !== runId) return;
+            }
             continue;
         }
 
@@ -2792,6 +2814,8 @@ async function rebuild(id, seq, pool, secs) {
     quizMsg("Rebuild it in order.");
 
     const got = [];
+
+    startClock();
 
     await timed(seq.length * 4000, new Promise(function (resolve) {
 
@@ -2866,6 +2890,8 @@ function startWord() {
 
         input.focus();
 
+        startClock();
+
         const answer = await timed(30000, new Promise(function (resolve) {
             go.onclick = function () { resolve(input.value); };
             input.onkeydown = function (e) { if (e.key === "Enter") resolve(input.value); };
@@ -2886,6 +2912,8 @@ function startWord() {
 async function choice(id, q, secs) {
 
     quizMsg(q.question);
+
+    startClock();
 
     const picked = await timed(secs * 1000, new Promise(function (resolve) {
         optionButtons(shuffled(q.options), function (item) { resolve(item); });

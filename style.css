@@ -2280,3 +2280,45 @@ path.fp-red:first-of-type { stroke-dasharray: 5 4; }
 }
 .retry-box p { font-size: clamp(1.3rem, 5vw, 2rem); letter-spacing: 0.08em; margin: 0; }
 .retry-box div { display: flex; gap: 0.8rem; flex-wrap: wrap; justify-content: center; }
+
+
+/* NEXT ROUND button */
+.next-btn { display: block; margin: 1.2rem auto 0; }
+
+/* THE BOARD: 10 cards + final, any screen size */
+.levels-board { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.levels-board .level-card { min-height: clamp(5rem, 13vh, 7.5rem); padding: 0.9rem 0.3rem 0.5rem; }
+.levels-board .level-card .level-name { font-size: clamp(0.62rem, 1.15vw, 0.95rem); overflow-wrap: anywhere; }
+.levels-board .level-card.is-final { grid-column: 1 / -1; min-height: clamp(4.5rem, 11vh, 6.5rem); }
+
+@media (max-width: 52rem) {
+
+    /* START PAGE on phones: text, then picture, then buttons */
+    #start-screen .briefing { grid-template-columns: minmax(0, 1fr); grid-template-areas: none; }
+    #start-screen .briefing-menu { display: contents; }
+    #start-screen .subtitle { order: 1; }
+    #start-screen h1 { order: 2; }
+    #start-screen .briefing-text { order: 3; }
+    #start-screen .board { display: block; grid-area: auto; order: 4; width: min(100%, 21rem); }
+    #start-screen .menu { order: 5; }
+
+    /* BOARD on phones */
+    .levels-board { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; padding: 0.6rem; }
+    .levels-board .level-card { min-height: 4.8rem; }
+    .levels-board .level-card .level-name { font-size: 0.8rem; }
+    .levels-board .level-card.is-final { min-height: 4.2rem; }
+}
+
+/* LEADERBOARD on small phones */
+@media (max-width: 40rem) {
+    #leaderboard-screen { padding-inline: 0.6rem; }
+    .leaderboard-entry { min-width: 0; }
+    .leaderboard-entry span { min-width: 0; }
+    .leaderboard-entry span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #leaderboard-back { margin: 1rem 0 1.5rem; }
+}
+@media (max-width: 24rem) {
+    .leaderboard-entry { grid-template-columns: 1.8rem 1fr 1fr 1fr; column-gap: 0.5rem; padding: 0.6rem 0.6rem; }
+    .leaderboard-entry span:nth-child(1) { font-size: 1.5rem; }
+    .leaderboard-time::before, .leaderboard-missed::before, .leaderboard-accuracy::before { display: block; margin: 0; }
+}

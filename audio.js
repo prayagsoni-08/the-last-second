@@ -41,7 +41,7 @@
     // Which screens play which looping sound.
     // Tension plays on the title, character and name screens, stops for
     // the rain at the school, then returns in the hallway and keeps
-    // playing (without restarting) through the board and all five
+    // playing (without restarting) through the board and all ten
     // challenges, until START is pressed on the final challenge, where
     // final.mp3 takes over. Tension comes back again for the Psycho
     // ending scene and the leaderboard.
@@ -64,6 +64,7 @@
         "lock-screen": "tension",
         "grid-screen": "tension",
         "doors-screen": "tension",
+        "quiz-screen": "tension",   // challenges 06-10
         "level-result-screen": "tension",
 
         // Tension keeps playing here until the player presses START.
